@@ -1,0 +1,12 @@
+{
+  "name": "chertan",
+  "version": "0.1.0",
+  "description": "TypeScript metaprogramming library",
+  "main": "index.ts",
+  "repository": "https://github.com/kazatsuyu/chertan.git",
+  "author": "Shirayama Kazatsuyu",
+  "license": "MIT",
+  "devDependencies": {
+    "typescript": "https://github.com/microsoft/TypeScript.git#templateTypes"
+  }
+}
