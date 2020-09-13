@@ -1,4 +1,4 @@
-import { Digits, DigitsStr } from "./numeric";
+import { Digits, DigitsStr } from './numeric';
 
 module detail {
   export declare const every: unique symbol;
@@ -33,7 +33,7 @@ type _Str = 'abc';
 type _Chars = 'a' | 'b' | 'c';
 
 module detail {
-  export type Tile<T extends string, N extends Digits | DigitsStr | 10 | '10'> = [
+  type Tile<T extends string, N extends Digits | DigitsStr | 10 | '10'> = [
       '',
       `${T}`,
       `${T}${T}`,
