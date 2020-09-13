@@ -35,30 +35,30 @@ interface _Test {
   assert: Assert<true>;
   assertNot: AssertNot<false>;
 
-  extends: {
-    ok: Assert<Extends<0, number>>;
-    fail: AssertNot<Extends<number, 0>>;
-  }
-  eq: {
-    ok: Assert<Eq<0, 0>>;
-    fail: AssertNot<Eq<0, 1>>;
-  }
-  and: {
-    ok: Assert<And<[true, true]>>;
-    fail0: AssertNot<And<[true, false]>>;
-    fail1: AssertNot<And<[false, true]>>;
-    fail2: AssertNot<And<[false, false]>>;
-  }
-  or: {
-    ok0: Assert<Or<[true, false]>>;
-    ok1: Assert<Or<[false, true]>>;
-    ok2: Assert<Or<[true, true]>>;
-    fail: AssertNot<Or<[false, false]>>;
-  }
-  not: {
-    ok: Assert<Not<false>>;
-    fail: AssertNot<Not<true>>;
-  }
+  extends: [
+    Assert<Extends<0, number>>,
+    AssertNot<Extends<number, 0>>,
+  ];
+  eq: [
+    Assert<Eq<0, 0>>,
+    AssertNot<Eq<0, 1>>,
+  ];
+  and: [
+    Assert<And<[true, true]>>,
+    AssertNot<And<[true, false]>>,
+    AssertNot<And<[false, true]>>,
+    AssertNot<And<[false, false]>>,
+  ];
+  or: [
+    Assert<Or<[true, false]>>,
+    Assert<Or<[false, true]>>,
+    Assert<Or<[true, true]>>,
+    AssertNot<Or<[false, false]>>,
+  ];
+  not: [
+    Assert<Not<false>>,
+    AssertNot<Not<true>>,
+  ];
 
   first: [
     Assert<Eq<First<_Str, _Chars>, 'a'>>,
