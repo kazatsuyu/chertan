@@ -1,2 +1,3 @@
 import './util';
-export * from './util';
+import './tuple';
+import './numeric';

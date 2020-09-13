@@ -7,6 +7,6 @@
   "author": "Shirayama Kazatsuyu",
   "license": "MIT",
   "devDependencies": {
-    "typescript": "https://github.com/microsoft/TypeScript.git#templateTypes"
+    "typescript": ">=4.1.0-dev.20200911"
   }
 }

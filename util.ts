@@ -1,13 +1,28 @@
-export type First<Str extends string, Expects extends string> = Str extends `${infer T}${RemoveFirst<Str, Expects>}` ? T : never;
+module detail {
+  export declare const every: unique symbol;
+  export type ExpectFirst<Str extends string, Expects extends string> = Str extends `${infer T}${ExpectRemoveFirst<Str, Expects>}` ? T : never;
+  export type AnyFirst<Str extends string> = Str extends `${infer T}${infer _}` ? T : never;
+  export type ExpectRemoveFirst<Str extends string, Expects extends string> = Str extends `${Expects}${infer T}` ? T : never;
+  export type AnyRemoveFirst<Str extends string> = Str extends `${infer _}${infer T}` ? T : never;
+}
+
+export type Every = typeof detail.every;
+export type First<Str extends string, Expects extends string | Every = Every> = {
+  [_: string]: `${detail.ExpectFirst<Str, Expects>}`;
+  [detail.every]: detail.AnyFirst<Str>;
+}[Expects];
 export type Last<Str extends string, Expects extends string> = Str extends `${RemoveLast<Str, Expects>}${infer T}` ? T : never;
-export type RemoveFirst<Str extends string, Expects extends string> = Str extends `${Expects}${infer T}` ? T : never;
+export type RemoveFirst<Str extends string, Expects extends string | Every = Every> = {
+  [_: string]: `${detail.ExpectRemoveFirst<Str, Expects>}`;
+  [detail.every]: detail.AnyRemoveFirst<Str>;
+}[Expects];
 export type RemoveLast<Str extends string, Expects extends string> = Str extends `${infer T}${Expects}` ? T : never;
 
 export type Extends<T, U> = (T extends U ? 1 : 0) extends 1 ? true : false;
 export type Eq<T, U> = And<[Extends<T, U>, Extends<U, T>]>;
 export type And<T extends boolean[]> = Extends<T[number], true>;
 export type Or<T extends boolean[]> = Not<Extends<T[number], false>>;
-export type Not<T extends boolean> = boolean extends T ? Extends<T, false> : never;
+export type Not<T extends boolean> = boolean extends T ? never : Extends<T, false>;
 
 export type Assert<_ extends true> = never;
 export type AssertNot<_ extends false> = never;
@@ -30,10 +45,14 @@ interface _Test {
   }
   and: {
     ok: Assert<And<[true, true]>>;
-    fail: AssertNot<And<[true, false]>>;
+    fail0: AssertNot<And<[true, false]>>;
+    fail1: AssertNot<And<[false, true]>>;
+    fail2: AssertNot<And<[false, false]>>;
   }
   or: {
-    ok: Assert<Or<[true, false]>>;
+    ok0: Assert<Or<[true, false]>>;
+    ok1: Assert<Or<[false, true]>>;
+    ok2: Assert<Or<[true, true]>>;
     fail: AssertNot<Or<[false, false]>>;
   }
   not: {
@@ -41,9 +60,15 @@ interface _Test {
     fail: AssertNot<Not<true>>;
   }
 
-  first: Assert<Eq<First<_Str, _Chars>, 'a'>>;
+  first: [
+    Assert<Eq<First<_Str, _Chars>, 'a'>>,
+    Assert<Eq<First<_Str>, 'a'>>
+  ];
   last: Assert<Eq<Last<_Str, _Chars>, 'c'>>;
-  removeFirst: Assert<Eq<RemoveFirst<_Str, _Chars>, 'bc'>>;
+  removeFirst: [
+    Assert<Eq<RemoveFirst<_Str, _Chars>, 'bc'>>,
+    Assert<Eq<RemoveFirst<_Str>, 'bc'>>,
+  ];
   removeLast: Assert<Eq<RemoveLast<_Str, _Chars>, 'ab'>>;
   unexpected: Assert<Eq<First<_Str, 'b'>, never>>;
 }
