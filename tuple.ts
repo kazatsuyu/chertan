@@ -1,6 +1,6 @@
 import { Digits, DigitsStr, First, RemoveFirst } from "./numeric";
 import { Div2 } from "./numeric/integer";
-import { Assert, Eq, First as First1, RemoveFirst as RemoveFirst1 } from "./util";
+import { Assert, Eq, Every, First as First1, RemoveFirst as RemoveFirst1 } from "./util";
 
 module detail {
   export type Tile<T extends unknown[], N extends Digits | DigitsStr | 10 | '10'> = [
@@ -70,33 +70,33 @@ export type Flatten<T extends unknown[][]> =
 
 module detail {
   module tuTuple {
-    export type _3<T extends string, Result extends string[], Counter extends unknown[] = []> =
+    export type _3<T extends string, Expect extends string | Every, Result extends string[], Counter extends unknown[] = []> =
       [T, Counter] extends { 0: '' } | {1: { length: 5 }} ? [T, Result] :
-      _3<RemoveFirst1<T>, [...Result, First1<T>], [...Counter, unknown]>;
-    export type _2<T extends string, Result extends string[], Counter extends unknown[] = []> =
-      _3<T, Result> extends [infer T, infer R] ?
+      _3<RemoveFirst1<T, Expect>, Expect, [...Result, First1<T, Expect>], [...Counter, unknown]>;
+    export type _2<T extends string, Expect extends string | Every, Result extends string[], Counter extends unknown[] = []> =
+      _3<T, Expect, Result> extends [infer T, infer R] ?
       [T, Counter] extends { 0: '' } | {1: { length: 4 }} ? [T, R] :
-      _2<Extract<T, string>, Extract<R, string[]>, [...Counter, unknown]> :
+      _2<Extract<T, string>, Expect, Extract<R, string[]>, [...Counter, unknown]> :
       never;
-    export type _1<T extends string, Result extends string[], Counter extends unknown[] = []> =
-      _2<T, Result> extends [infer T, infer R] ?
+    export type _1<T extends string, Expect extends string | Every, Result extends string[], Counter extends unknown[] = []> =
+      _2<T, Expect, Result> extends [infer T, infer R] ?
       [T, Counter] extends { 0: '' } | {1: { length: 4 }} ? [T, R] :
-      _1<Extract<T, string>, Extract<R, string[]>, [...Counter, unknown]> :
+      _1<Extract<T, string>, Expect, Extract<R, string[]>, [...Counter, unknown]> :
       never;
-    export type _0<T extends string, Result extends string[], Counter extends unknown[] = []> =
-      _1<T, Result> extends [infer T, infer R] ?
+    export type _0<T extends string, Expect extends string | Every, Result extends string[], Counter extends unknown[] = []> =
+      _1<T, Expect, Result> extends [infer T, infer R] ?
       [T, Counter] extends { 0: '' } | {1: { length: 4 }} ? [T, R] :
-      _0<Extract<T, string>, Extract<R, string[]>, [...Counter, unknown]> :
+      _0<Extract<T, string>, Expect, Extract<R, string[]>, [...Counter, unknown]> :
       never;
   }
-  export type ToTuple<T extends string, Result extends string[] = [], Counter extends unknown[] = []> =
-    tuTuple._0<T, Result> extends [infer T, infer R] ?
+  export type ToTuple<T extends string, Expect extends string | Every, Result extends string[] = [], Counter extends unknown[] = []> =
+    tuTuple._0<T, Expect, Result> extends [infer T, infer R] ?
     [T, Counter] extends { 0: '' } | {1: { length: 4 }} ? R :
-    ToTuple<Extract<T, string>, Extract<R, string[]>, [...Counter, unknown]> :
+    ToTuple<Extract<T, string>, Expect, Extract<R, string[]>, [...Counter, unknown]> :
     never;
 }
 
-export type ToTuple<T extends string> = detail.ToTuple<T>;
+export type ToTuple<T extends string, Expect extends string | Every = Every> = detail.ToTuple<T, Expect>;
 export type Join<T extends string[], Separator extends string = ''> =
   T extends [] ? '' :
   T extends [infer U] ? U :
