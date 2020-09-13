@@ -7,6 +7,6 @@
   "author": "Shirayama Kazatsuyu",
   "license": "MIT",
   "devDependencies": {
-    "typescript": ">=4.1.0-dev.20200911"
+    "typescript": "next"
   }
 }
