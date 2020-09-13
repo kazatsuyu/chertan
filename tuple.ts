@@ -61,8 +61,7 @@ export type Reverse<T extends unknown[]> = {
 }
 
 export type Flatten<T extends unknown[][]> = 
-  T extends [] ? [] :
-  T extends [[...infer U]] ? U :
+  T extends { length: 0 | 1 } ? T extends [[...infer U]] ? U : [] :
   Div2<`${T['length']}`> extends `${infer N}` ?
   [Flatten<Extract<Head<T, N>, unknown[][]>>, Flatten<Extract<Tail<T, N>, unknown[][]>>] extends [infer U, infer V] ?
     [...Extract<U, unknown[]>, ...Extract<V, unknown[]>] :
@@ -98,8 +97,7 @@ module detail {
 
 export type ToTuple<T extends string, Expect extends string | Every = Every> = detail.ToTuple<T, Expect>;
 export type Join<T extends string[], Separator extends string = ''> =
-  T extends [] ? '' :
-  T extends [infer U] ? U :
+  T extends { length: 0 | 1 } ? T extends [infer U] ? U : '' :
   Div2<`${T['length']}`> extends `${infer N}` ?
   [Join<Extract<Head<T, N>, string[]>>, Join<Extract<Tail<T, N>, string[]>, Separator>] extends [infer U, infer V] ?
     `${Extract<U, string>}${Separator}${Extract<V, string>}` :

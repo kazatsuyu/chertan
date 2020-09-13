@@ -1,3 +1,5 @@
+import { Digits, DigitsStr } from "./numeric";
+
 module detail {
   export declare const every: unique symbol;
   export type ExpectFirst<Str extends string, Expects extends string> = Str extends `${infer T}${ExpectRemoveFirst<Str, Expects>}` ? T : never;
@@ -29,6 +31,31 @@ export type AssertNot<_ extends false> = never;
 
 type _Str = 'abc';
 type _Chars = 'a' | 'b' | 'c';
+
+module detail {
+  export type Tile<T extends string, N extends Digits | DigitsStr | 10 | '10'> = [
+      '',
+      `${T}`,
+      `${T}${T}`,
+      `${T}${T}${T}`,
+      `${T}${T}${T}${T}`,
+      `${T}${T}${T}${T}${T}`,
+      `${T}${T}${T}${T}${T}${T}`,
+      `${T}${T}${T}${T}${T}${T}${T}`,
+      `${T}${T}${T}${T}${T}${T}${T}${T}`,
+      `${T}${T}${T}${T}${T}${T}${T}${T}${T}`,
+      `${T}${T}${T}${T}${T}${T}${T}${T}${T}${T}`,
+  ][N];
+  
+  export type MakeString<T, N extends string, X extends string = ''> =
+      string extends N ? never :
+      N extends '' ? X :
+      First<N> extends infer U ? U extends DigitsStr ?
+      MakeString<T, RemoveFirst<N>, `${Tile<T, U>}${Tile<X, 10>}`> :
+      never : never;
+}
+
+export type MakeString<T extends string, N extends number | string> = detail.MakeString<T, `${N}`>;
 
 //@ts-ignore
 interface _Test {

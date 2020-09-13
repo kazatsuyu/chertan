@@ -1,6 +1,6 @@
 import { DigitsStr, First, Last, RemoveFirst, RemoveLast } from ".";
-import { Head, Join, MakeTuple, Reverse, Slice, StringIndexSequence, Tail, ToTuple } from "../tuple";
-import { Assert, Eq } from "../util";
+import { Head, MakeTuple, Reverse, Slice, StringIndexSequence, Tail, ToTuple } from "../tuple";
+import { Assert, Eq, MakeString } from "../util";
 
 export type Sign = '+' | '-';
 
@@ -111,11 +111,10 @@ module detail {
 export type Div2<N extends string> = detail.Div2<N, '', ''>;
 
 export type Sum<T extends string[]> =
-  T extends [] ? '0' :
-  T extends [ `${infer U}` ] ? U :
+  T extends { length: 0 | 1 } ? T extends [ `${infer U}` ] ? U : '0' :
   Div2<`${T['length']}`> extends `${infer N}` ?
   Sum<Extract<Head<T, N>, string[]>> extends `${infer U}` ?
-  Sum<Extract<Tail<T, N>, string[]>> extends `${infer V}` ?
+    Sum<Extract<Tail<T, N>, string[]>> extends `${infer V}` ?
     Add<U, V> :
   never : never : never;
 
@@ -134,25 +133,32 @@ module detail {
     type _7 = X<_6, _1>;
     type _8 = X<_7, _1>;
     type _9 = X<_8, _1>;
-    export type Type = [_0, _1, _2, _3, _4, _5, _6, _7, _8, _9];
+    type Table = [_0, _1, _2, _3, _4, _5, _6, _7, _8, _9];
+    export type Type<L extends string[], R extends string[], Sign extends '' | '-'> = {
+      [K1 in keyof L]: Sum<{
+        [K2 in keyof R]: `${Sign}${
+          Table[Extract<L[K1], DigitsStr>][Extract<R[K2], DigitsStr>]
+        }${
+          MakeString<'0', Extract<K2, string>>
+        }`;
+      }>;
+    } extends infer T ? Sum<Extract<{
+      [K in keyof T]: `${Extract<T[K], string>}${MakeString<'0', Extract<K, string>>}`;
+    }, string[]>> : never;
   }
-  export type Mul<L extends string[], R extends string[]> = {
-    [K1 in keyof L]: Sum<{
-      [K2 in keyof R]: `${
-        mul.Type[Extract<L[K1], DigitsStr>][Extract<R[K2], DigitsStr>]
-      }${
-        Extract<Join<MakeTuple<'0', K2>>, string>
-      }`;
-    }>;
-  } extends infer T ? Sum<Extract<{
-    [K in keyof T]: `${Extract<T[K], string>}${Extract<Join<MakeTuple<'0', K>>, string>}`;
-  }, string[]>> : never;
+  export type Mul<L extends string, R extends string, Sign extends '' | '-'> = mul.Type<
+    Extract<Reverse<Extract<ToTuple<L>, string[]>>, string[]>,
+    Extract<Reverse<Extract<ToTuple<R>, string[]>>, string[]>,
+    Sign
+  >;
 }
 
-type Mul<L extends string, R extends string> = detail.Mul<
-  Extract<Reverse<Extract<ToTuple<L>, string[]>>, string[]>,
-  Extract<Reverse<Extract<ToTuple<R>, string[]>>, string[]>
->;
+type Mul<L extends string, R extends string> = 
+  L extends `-${infer L}` ?
+    R extends `-${infer R}` ? detail.Mul<L, R, ''> :
+    detail.Mul<L, R, '-'> :
+  R extends `-${infer R}` ? detail.Mul<L, R, '-'>:
+  detail.Mul<L, R, ''>;
 
 // @ts-ignore
 interface _Test {
@@ -172,6 +178,11 @@ interface _Test {
     Assert<Eq<Sub<"-28554", "66181">, "-94735">>,
     Assert<Eq<Sub<"-28554", "-66181">, "37627">>,
   ];
-  sum: Assert<Eq<Sum<StringIndexSequence<10>>, "45">>;
-  mul: Assert<Eq<Mul<'28554', '66181'>, '1889732274'>>;
+  sum: Assert<Eq<Sum<StringIndexSequence<100>>, "4950">>;
+  mul: [
+    Assert<Eq<Mul<'28554', '66181'>, '1889732274'>>,
+    Assert<Eq<Mul<'-28554', '66181'>, '-1889732274'>>,
+    Assert<Eq<Mul<'28554', '-66181'>, '-1889732274'>>,
+    Assert<Eq<Mul<'-28554', '-66181'>, '1889732274'>>,
+  ];
 }
