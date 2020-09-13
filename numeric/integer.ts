@@ -1,5 +1,5 @@
 import { DigitsStr, First, Last, RemoveFirst, RemoveLast } from ".";
-import { Head, MakeTuple, Reverse, Slice, StringIndexSequence, Tail, ToTuple } from "../tuple";
+import { Head, MakeTuple, Reverse, Slice, StringIndexSequence, Tail, ToReverseTuple, ToTuple } from "../tuple";
 import { Assert, Eq, MakeString } from "../util";
 
 export type Sign = '+' | '-';
@@ -38,7 +38,10 @@ module detail {
       never;
 }
 
-export type Inc<T extends string> = detail.Inc<T, ''>;
+export type Inc<T extends string> =
+  T extends '-1' ? '0' :
+  T extends `-${infer T}` ? detail.Dec<T, '-'>:
+  detail.Inc<T, ''>;
 
 export type Add<T extends string, U extends string> =
   T extends `-${infer T}` ?
@@ -61,7 +64,7 @@ module detail {
     type Vec = [...Map<Indices, 0>, ...Map<Indices, 1>];
     type Vec2 = [Slice<Vec, 9, 19>, Slice<Vec, 8, 18>, Slice<Vec, 7, 17>, Slice<Vec, 6, 16>, Slice<Vec, 5, 15>,
                   Slice<Vec, 4, 14>, Slice<Vec, 3, 13>, Slice<Vec, 2, 12>, Slice<Vec, 1, 11>];
-    type Vec3 = [[...Vec2,  Slice<Vec, 0, 10>], [Slice<Vec, 10, 20>, ...Vec2]];  
+    type Vec3 = [[...Vec2,  Slice<Vec, 0, 10>], [Slice<Vec, 10, 20>, ...Vec2]];
     export type Type<L1 extends string, R1 extends string, Carry extends 0 | 1> =
       Vec3[Carry][Extract<L1, DigitsStr>][Extract<R1, DigitsStr>];
   }
@@ -77,6 +80,11 @@ module detail {
       never;
 }
 
+export type Dec<T extends string> =
+  T extends '0' ? '-1' :
+  T extends `-${infer T}` ? detail.Inc<T, '-'> :
+  detail.Dec<T, ''>;
+
 export type Sub<T extends string, U extends string> =
   T extends `-${infer T}` ?
     U extends `-${infer U}` ? detail.Sub<T, U, 0, '-'> | detail.Sub<U, T, 0, ''> :
@@ -86,15 +94,15 @@ export type Sub<T extends string, U extends string> =
 
 module detail {
   module div2 {
+    // Mapped type と Flatten を駆使すれば生成できるが Flatten がこれに依存しているため使えない
     export type Quotient<Padding extends '' | '0'> = [
       Padding, Padding, 1, 1, 2, 2, 3, 3, 4, 4, 5, 5, 6, 6, 7, 7, 8, 8, 9, 9,
     ];
+    // Tile がこれに依存しているため Tile<['', '1'], 10> は使えない
     export type Complement = [
       '', '1', '', '1', '', '1', '', '1', '', '1', '', '1', '', '1', '', '1', '', '1', '', '1',
     ]
-    export type Padding<Padding extends '' | '0'> = [
-      Padding, Padding, '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0',
-    ];
+    export type Padding<Padding extends '' | '0'> = [ Padding, Padding, ...MakeTuple<'0', 18> ];
     export type Keys = StringIndexSequence<20>[number];
   }
   export type Div2<N extends string, Carry extends '' | '1', Padding extends '' | '0'> =
@@ -126,31 +134,17 @@ module detail {
     type _0 = MakeTuple<"0", 10>;
     type _1 = StringIndexSequence<10>;
     type _2 = X<_1, _1>;
-    type _3 = X<_2, _1>;
-    type _4 = X<_3, _1>;
-    type _5 = X<_4, _1>;
-    type _6 = X<_5, _1>;
-    type _7 = X<_6, _1>;
-    type _8 = X<_7, _1>;
-    type _9 = X<_8, _1>;
-    type Table = [_0, _1, _2, _3, _4, _5, _6, _7, _8, _9];
+    type _4 = X<_2, _2>;
+    type _8 = X<_4, _4>;
+    type Table = [_0, _1, _2, X<_1, _2>, _4, X<_1, _4>, X<_2, _4>, X<_1, X<_2, _4>>, _8, X<_1, _8>];
     export type Type<L extends string[], R extends string[], Sign extends '' | '-'> = {
       [K1 in keyof L]: Sum<{
-        [K2 in keyof R]: `${Sign}${
-          Table[Extract<L[K1], DigitsStr>][Extract<R[K2], DigitsStr>]
-        }${
-          MakeString<'0', Extract<K2, string>>
-        }`;
+        [K2 in keyof R]: `${Sign}${Table[Extract<L[K1], DigitsStr>][Extract<R[K2], DigitsStr>]}${MakeString<'0', K2>}`;
       }>;
-    } extends infer T ? Sum<Extract<{
-      [K in keyof T]: `${Extract<T[K], string>}${MakeString<'0', Extract<K, string>>}`;
-    }, string[]>> : never;
+    } extends [...infer T] ? Sum<{ [K in keyof T]: `${Extract<T[K], string>}${MakeString<'0', K>}` }> : never;
   }
-  export type Mul<L extends string, R extends string, Sign extends '' | '-'> = mul.Type<
-    Extract<Reverse<Extract<ToTuple<L>, string[]>>, string[]>,
-    Extract<Reverse<Extract<ToTuple<R>, string[]>>, string[]>,
-    Sign
-  >;
+  export type Mul<L extends string, R extends string, Sign extends '' | '-'> =
+    mul.Type<ToReverseTuple<L, DigitsStr>, ToReverseTuple<R, DigitsStr>, Sign>;
 }
 
 type Mul<L extends string, R extends string> = 
@@ -162,6 +156,16 @@ type Mul<L extends string, R extends string> =
 
 // @ts-ignore
 interface _Test {
+  inc: [
+    Assert<Eq<Inc<'9'>, '10'>>,
+    Assert<Eq<Inc<'-1'>, '0'>>,
+    Assert<Eq<Inc<'-10'>, '-9'>>,
+  ];
+  dec: [
+    Assert<Eq<Dec<'10'>, '9'>>,
+    Assert<Eq<Dec<'0'>, '-1'>>,
+    Assert<Eq<Dec<'-9'>, '-10'>>,
+  ];
   add: [
     Assert<Eq<Add<"1", "9">, "10">>,
     Assert<Eq<Add<"1", "8">, "9">>,
