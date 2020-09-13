@@ -1,22 +1,26 @@
 import { Digits, DigitsStr } from './numeric';
 
-module detail {
-  export declare const every: unique symbol;
-  export type ExpectFirst<Str extends string, Expects extends string> = Str extends `${infer T}${ExpectRemoveFirst<Str, Expects>}` ? T : never;
-  export type AnyFirst<Str extends string> = Str extends `${infer T}${infer _}` ? T : never;
-  export type ExpectRemoveFirst<Str extends string, Expects extends string> = Str extends `${Expects}${infer T}` ? T : never;
-  export type AnyRemoveFirst<Str extends string> = Str extends `${infer _}${infer T}` ? T : never;
+
+module detail.every {
+  export declare const tag: unique symbol;
+}
+export type Every = typeof detail.every.tag;
+
+module detail.first {
+  export type Expect<Str extends string, Expects extends string> = Str extends `${infer T}${ExpectRemove<Str, Expects>}` ? T : never;
+  export type Any<Str extends string> = Str extends `${infer T}${infer _}` ? T : never;
+  export type ExpectRemove<Str extends string, Expects extends string> = Str extends `${Expects}${infer T}` ? T : never;
+  export type AnyRemove<Str extends string> = Str extends `${infer _}${infer T}` ? T : never;
 }
 
-export type Every = typeof detail.every;
 export type First<Str extends string, Expects extends string | Every = Every> = {
-  [_: string]: `${detail.ExpectFirst<Str, Expects>}`;
-  [detail.every]: detail.AnyFirst<Str>;
+  [_: string]: `${detail.first.Expect<Str, Extract<Expects, string>>}`;
+  [detail.every.tag]: detail.first.Any<Str>;
 }[Expects];
 export type Last<Str extends string, Expects extends string> = Str extends `${RemoveLast<Str, Expects>}${infer T}` ? T : never;
 export type RemoveFirst<Str extends string, Expects extends string | Every = Every> = {
-  [_: string]: `${detail.ExpectRemoveFirst<Str, Expects>}`;
-  [detail.every]: detail.AnyRemoveFirst<Str>;
+  [_: string]: `${detail.first.ExpectRemove<Str, Extract<Expects, string>>}`;
+  [detail.every.tag]: detail.first.AnyRemove<Str>;
 }[Expects];
 export type RemoveLast<Str extends string, Expects extends string> = Str extends `${infer T}${Expects}` ? T : never;
 
@@ -32,8 +36,8 @@ export type AssertNot<_ extends false> = never;
 type _Str = 'abc';
 type _Chars = 'a' | 'b' | 'c';
 
-module detail {
-  type Tile<T extends string, N extends Digits | DigitsStr | 10 | '10'> = [
+module detail.makeString {
+  type Tile<T extends string> = [
       '',
       `${T}`,
       `${T}${T}`,
@@ -45,17 +49,17 @@ module detail {
       `${T}${T}${T}${T}${T}${T}${T}${T}`,
       `${T}${T}${T}${T}${T}${T}${T}${T}${T}`,
       `${T}${T}${T}${T}${T}${T}${T}${T}${T}${T}`,
-  ][N];
+  ];
   
-  export type MakeString<T, N extends string, X extends string = ''> =
+  export type Impl<T, N extends string, X extends string = ''> =
       string extends N ? never :
       N extends '' ? X :
       First<N> extends infer U ? U extends DigitsStr ?
-      MakeString<T, RemoveFirst<N>, `${Tile<T, U>}${Tile<X, 10>}`> :
+      Impl<T, RemoveFirst<N>, `${Tile<Extract<T, string>>[U]}${Tile<X>[10]}`> :
       never : never;
 }
 
-export type MakeString<T extends string, N extends number | string> = detail.MakeString<T, `${N}`>;
+export type MakeString<T extends string, N extends number | string> = detail.makeString.Impl<T, `${N}`>;
 
 //@ts-ignore
 interface _Test {

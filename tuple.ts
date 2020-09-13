@@ -2,62 +2,72 @@ import { Digits, DigitsStr, First, RemoveFirst } from './numeric';
 import { Div2, Sub, Dec } from './numeric/integer';
 import { Assert, Eq, Every, First as First1, RemoveFirst as RemoveFirst1 } from './util';
 
-module detail {
-  module tile {
-    export type Type<T extends unknown[]> = [
-      [],
-      [...T],
-      [...T, ...T],
-      [...T, ...T, ...T],
-      [...T, ...T, ...T, ...T],
-      [...T, ...T, ...T, ...T, ...T],
-      [...T, ...T, ...T, ...T, ...T, ...T],
-      [...T, ...T, ...T, ...T, ...T, ...T, ...T],
-      [...T, ...T, ...T, ...T, ...T, ...T, ...T, ...T],
-      [...T, ...T, ...T, ...T, ...T, ...T, ...T, ...T, ...T],
-      [...T, ...T, ...T, ...T, ...T, ...T, ...T, ...T, ...T, ...T],
-    ];
-  }
+module detail.tile {
+  export type Table<T extends unknown[]> = [
+    [],
+    [...T],
+    [...T, ...T],
+    [...T, ...T, ...T],
+    [...T, ...T, ...T, ...T],
+    [...T, ...T, ...T, ...T, ...T],
+    [...T, ...T, ...T, ...T, ...T, ...T],
+    [...T, ...T, ...T, ...T, ...T, ...T, ...T],
+    [...T, ...T, ...T, ...T, ...T, ...T, ...T, ...T],
+    [...T, ...T, ...T, ...T, ...T, ...T, ...T, ...T, ...T],
+    [...T, ...T, ...T, ...T, ...T, ...T, ...T, ...T, ...T, ...T],
+  ];
 
-  export type Tile<T extends unknown[], N extends string, X extends unknown[] = []> =
+  export type Impl<T extends unknown[], N extends string, X extends unknown[] = []> =
       N extends '' ? X :
       First<N> extends infer U ? U extends DigitsStr ?
-      Tile<T, RemoveFirst<N>, [...tile.Type<T>[U], ...tile.Type<X>['10']]> :
+      Impl<T, RemoveFirst<N>, [...Table<T>[U], ...Table<X>['10']]> :
       never : never;
-
-  export type IndexSequence<T extends unknown[]> = {
-    [K in keyof T]: K extends string ? ToNumber<K> : never;
-  }
-
-  export type StringIndexSequence<T extends unknown[]> = {
-    [K in keyof T]: K;
-  }
 }
 
-export type Tile<T extends unknown[], N extends string | number> = detail.Tile<T, `${N}`>;
+export type Tile<T extends unknown[], N extends string | number> = detail.tile.Impl<T, `${N}`>;
 
 export type MakeTuple<T, N extends number | string> = Tile<[T], N>;
 
 export type ToNumber<S extends string> = MakeTuple<unknown, S>['length'];
 
-export type IndexSequence<N extends number | string> = detail.IndexSequence<MakeTuple<unknown, N>>;
 
-export type StringIndexSequence<N extends number | string> = detail.StringIndexSequence<MakeTuple<unknown, N>>;
+module detail.indexSequence {
+  export type Number<T extends unknown[]> = {
+    [K in keyof T]: ToNumber<Extract<K, string>>;
+  }
 
-module detail {
-  export type Head<T extends unknown[], U extends unknown[]> = {
+  export type String<T extends unknown[]> = {
+    [K in keyof T]: K;
+  }
+}
+
+export type IndexSequence<N extends number | string> = detail.indexSequence.Number<MakeTuple<unknown, N>>;
+
+export type StringIndexSequence<N extends number | string> = detail.indexSequence.String<MakeTuple<unknown, N>>;
+
+module detail.head {
+  export type Impl<T extends unknown[], U extends unknown[]> = {
     [K in keyof U]: T[Extract<K, keyof T>];
   }
 }
 
 export type Head<T extends unknown[], N extends number | string> =
-  `${N}` extends keyof T ? detail.Head<T, MakeTuple<unknown, N>> : T;
+  `${N}` extends keyof T ? detail.head.Impl<T, MakeTuple<unknown, N>> : T;
 
 export type Tail<T extends unknown[], N extends number | string> =
   T extends [...Extract<Head<T, N>, unknown[]>, ...infer U] ? U : T;
 
 export type Slice<T extends unknown[], N extends number | string, M extends number | string> =
   Tail<Extract<Head<T, M>, unknown[]>, N>;
+
+export type Insert<T extends unknown[], U extends unknown[], N extends number | string> =
+  [...Extract<Head<T, N>, unknown[]>, ...U, ...Extract<Tail<T, N>, unknown[]>];
+
+export type Replace<T extends unknown[], U extends unknown[], N extends number | string, M extends number | string> =
+  [...Extract<Head<T, N>, unknown[]>, ...U, ...Extract<Tail<T, M>, unknown[]>];
+
+export type Erase<T extends unknown[], N extends number | string, M extends number | string> =
+  [...Extract<Head<T, N>, unknown[]>, ...Extract<Tail<T, M>, unknown[]>];
 
 export type Reverse<T extends unknown[]> = {
   [K in keyof T]: 
@@ -69,77 +79,109 @@ export type Reverse<T extends unknown[]> = {
 }
 
 export type Flatten<T extends unknown[][]> = 
-  T extends { length: 0 | 1 } ? T extends [[...infer U]] ? U : [] :
+  T extends { length: 0 | 1 } ? [[], T[0]][T['length']] :
   Div2<`${T['length']}`> extends `${infer N}` ?
-  [Flatten<Extract<Head<T, N>, unknown[][]>>, Flatten<Extract<Tail<T, N>, unknown[][]>>] extends [infer U, infer V] ?
-    [...Extract<U, unknown[]>, ...Extract<V, unknown[]>] :
-  never : never;
+    [Flatten<Extract<Head<T, N>, unknown[][]>>, Flatten<Extract<Tail<T, N>, unknown[][]>>] extends [infer U, infer V] ?
+      [...Extract<U, unknown[]>, ...Extract<V, unknown[]>] :
+    never :
+  never;
 
-module detail {
-  module toTuple {
-    export type _3<T extends string, Expect extends string | Every, Result extends string[], Counter extends unknown[] = []> =
-      [T, Counter] extends { 0: '' } | {1: { length: 5 }} ? [T, Result] :
-      _3<RemoveFirst1<T, Expect>, Expect, [...Result, First1<T, Expect>], [...Counter, unknown]>;
-    export type _2<T extends string, Expect extends string | Every, Result extends string[], Counter extends unknown[] = []> =
-      _3<T, Expect, Result> extends [infer T, infer R] ?
-      [T, Counter] extends { 0: '' } | {1: { length: 4 }} ? [T, R] :
-      _2<Extract<T, string>, Expect, Extract<R, string[]>, [...Counter, unknown]> :
-      never;
-    export type _1<T extends string, Expect extends string | Every, Result extends string[], Counter extends unknown[] = []> =
-      _2<T, Expect, Result> extends [infer T, infer R] ?
-      [T, Counter] extends { 0: '' } | {1: { length: 4 }} ? [T, R] :
-      _1<Extract<T, string>, Expect, Extract<R, string[]>, [...Counter, unknown]> :
-      never;
-    export type _0<T extends string, Expect extends string | Every, Result extends string[], Counter extends unknown[] = []> =
-      _1<T, Expect, Result> extends [infer T, infer R] ?
-      [T, Counter] extends { 0: '' } | {1: { length: 4 }} ? [T, R] :
-      _0<Extract<T, string>, Expect, Extract<R, string[]>, [...Counter, unknown]> :
-      never;
-  }
-  export type ToTuple<T extends string, Expect extends string | Every, Result extends string[] = [], Counter extends unknown[] = []> =
-    toTuple._0<T, Expect, Result> extends [infer T, infer R] ?
+export type RecursiveFlatten<T extends unknown[]> = 
+  T extends { length: 0 | 1 } ? T extends [unknown[]] ? RecursiveFlatten<T[0]> : [[], [T[0]]][T['length']] :
+  Div2<`${T['length']}`> extends `${infer N}` ?
+    [RecursiveFlatten<Extract<Head<T, N>, unknown[]>>, RecursiveFlatten<Extract<Tail<T, N>, unknown[]>>] extends [infer U, infer V] ?
+      [...Extract<U, unknown[]>, ...Extract<V, unknown[]>] :
+    never :
+  never;
+
+module detail.toTuple {
+  type _3<T extends string, Expect extends string | Every, Result extends string[], Counter extends unknown[] = []> =
+    [T, Counter] extends { 0: '' } | {1: { length: 5 }} ? [T, Result] :
+    _3<RemoveFirst1<T, Expect>, Expect, [...Result, First1<T, Expect>], [...Counter, unknown]>;
+  type _2<T extends string, Expect extends string | Every, Result extends string[], Counter extends unknown[] = []> =
+    _3<T, Expect, Result> extends [infer T, infer R] ?
+    [T, Counter] extends { 0: '' } | {1: { length: 4 }} ? [T, R] :
+    _2<Extract<T, string>, Expect, Extract<R, string[]>, [...Counter, unknown]> :
+    never;
+  type _1<T extends string, Expect extends string | Every, Result extends string[], Counter extends unknown[] = []> =
+    _2<T, Expect, Result> extends [infer T, infer R] ?
+    [T, Counter] extends { 0: '' } | {1: { length: 4 }} ? [T, R] :
+    _1<Extract<T, string>, Expect, Extract<R, string[]>, [...Counter, unknown]> :
+    never;
+  type _0<T extends string, Expect extends string | Every, Result extends string[], Counter extends unknown[] = []> =
+    _1<T, Expect, Result> extends [infer T, infer R] ?
+    [T, Counter] extends { 0: '' } | {1: { length: 4 }} ? [T, R] :
+    _0<Extract<T, string>, Expect, Extract<R, string[]>, [...Counter, unknown]> :
+    never;
+  export type Impl<T extends string, Expect extends string | Every, Result extends string[] = [], Counter extends unknown[] = []> =
+    _0<T, Expect, Result> extends [infer T, infer R] ?
     [T, Counter] extends { 0: '' } | {1: { length: 4 }} ? R :
-    ToTuple<Extract<T, string>, Expect, Extract<R, string[]>, [...Counter, unknown]> :
+    Impl<Extract<T, string>, Expect, Extract<R, string[]>, [...Counter, unknown]> :
     never;
 }
 
-export type ToTuple<T extends string, Expect extends string | Every = Every> = detail.ToTuple<T, Expect>;
+export type ToTuple<T extends string, Expect extends string | Every = Every> = detail.toTuple.Impl<T, Expect>;
 
-module detail {
-  module toReverseTuple {
-    export type _3<T extends string, Expect extends string | Every, Result extends string[], Counter extends unknown[] = []> =
-      [T, Counter] extends { 0: '' } | {1: { length: 5 }} ? [T, Result] :
-      _3<RemoveFirst1<T, Expect>, Expect, [First1<T, Expect>, ...Result], [...Counter, unknown]>;
-    export type _2<T extends string, Expect extends string | Every, Result extends string[], Counter extends unknown[] = []> =
-      _3<T, Expect, Result> extends [infer T, infer R] ?
-      [T, Counter] extends { 0: '' } | {1: { length: 4 }} ? [T, R] :
-      _2<Extract<T, string>, Expect, Extract<R, string[]>, [...Counter, unknown]> :
-      never;
-    export type _1<T extends string, Expect extends string | Every, Result extends string[], Counter extends unknown[] = []> =
-      _2<T, Expect, Result> extends [infer T, infer R] ?
-      [T, Counter] extends { 0: '' } | {1: { length: 4 }} ? [T, R] :
-      _1<Extract<T, string>, Expect, Extract<R, string[]>, [...Counter, unknown]> :
-      never;
-    export type _0<T extends string, Expect extends string | Every, Result extends string[], Counter extends unknown[] = []> =
-      _1<T, Expect, Result> extends [infer T, infer R] ?
-      [T, Counter] extends { 0: '' } | {1: { length: 4 }} ? [T, R] :
-      _0<Extract<T, string>, Expect, Extract<R, string[]>, [...Counter, unknown]> :
-      never;
-  }
-  export type ToReverseTuple<T extends string, Expect extends string | Every = Every, Result extends string[] = [], Counter extends unknown[] = []> =
-  toReverseTuple._0<T, Expect, Result> extends [infer T, infer R] ?
-    [T, Counter] extends { 0: '' } | {1: { length: 4 }} ? R :
-    ToTuple<Extract<T, string>, Expect, Extract<R, string[]>, [...Counter, unknown]> :
+module detail.toReverseTuple {
+  type _3<T extends string, Expect extends string | Every, Result extends string[], Counter extends unknown[] = []> =
+    [T, Counter] extends { 0: '' } | {1: { length: 5 }} ? [T, Result] :
+    _3<RemoveFirst1<T, Expect>, Expect, [First1<T, Expect>, ...Result], [...Counter, unknown]>;
+  type _2<T extends string, Expect extends string | Every, Result extends string[], Counter extends unknown[] = []> =
+    _3<T, Expect, Result> extends [infer T, infer R] ?
+    [T, Counter] extends { 0: '' } | {1: { length: 4 }} ? [T, R] :
+    _2<Extract<T, string>, Expect, Extract<R, string[]>, [...Counter, unknown]> :
+    never;
+  type _1<T extends string, Expect extends string | Every, Result extends string[], Counter extends unknown[] = []> =
+    _2<T, Expect, Result> extends [infer T, infer R] ?
+    [T, Counter] extends { 0: '' } | {1: { length: 4 }} ? [T, R] :
+    _1<Extract<T, string>, Expect, Extract<R, string[]>, [...Counter, unknown]> :
+    never;
+  type _0<T extends string, Expect extends string | Every, Result extends string[], Counter extends unknown[] = []> =
+    _1<T, Expect, Result> extends [infer T, infer R] ?
+    [T, Counter] extends { 0: '' } | {1: { length: 4 }} ? [T, R] :
+    _0<Extract<T, string>, Expect, Extract<R, string[]>, [...Counter, unknown]> :
+    never;
+  export type Impl<T extends string, Expect extends string | Every = Every, Result extends string[] = [], Counter extends unknown[] = []> =
+    _0<T, Expect, Result> extends [infer T, infer R] ?
+      [T, Counter] extends { 0: '' } | {1: { length: 4 }} ? R :
+      Impl<Extract<T, string>, Expect, Extract<R, string[]>, [...Counter, unknown]> :
     never;
 }
 
-export type ToReverseTuple<T extends string, Expect extends string> = detail.ToReverseTuple<T, Expect>;
+export type ToReverseTuple<T extends string, Expect extends string> = detail.toReverseTuple.Impl<T, Expect>;
+
 export type Join<T extends string[], Separator extends string = ''> =
-  T extends { length: 0 | 1 } ? T extends [infer U] ? U : '' :
+  T extends { length: 0 | 1 } ? ['', T[0]][T['length']] :
   Div2<`${T['length']}`> extends `${infer N}` ?
-  [Join<Extract<Head<T, N>, string[]>>, Join<Extract<Tail<T, N>, string[]>, Separator>] extends [infer U, infer V] ?
-    `${Extract<U, string>}${Separator}${Extract<V, string>}` :
-  never : never;
+    [Join<Extract<Head<T, N>, string[]>, Separator>, Join<Extract<Tail<T, N>, string[]>, Separator>] extends [infer U, infer V] ?
+      `${Extract<U, string>}${Separator}${Extract<V, string>}` :
+    never :
+  never;
+
+export type Zip<T extends unknown[], U extends unknown[]> = keyof T extends keyof U ? {
+  [K in keyof U]: K extends keyof T ? [T[K], U[K]] : [never, U[K]];
+} : {
+  [K in keyof T]: K extends keyof U ? [T[K], U[K]] : [T[K], never];
+};
+
+export type Product<T extends unknown[], U extends unknown[]> = Flatten<{
+  [K1 in keyof T]: { [K2 in keyof U]: [T[K1], U[K2]] };
+}>;
+
+module detail.filter {
+  export type Impl<T extends unknown[], F extends boolean[]> = 
+    T extends { length: 0 | 1 } ? [[], F[0] extends true ? [T[0]] : []][T['length']] :
+    Div2<`${T['length']}`> extends `${infer N}` ?
+      [
+        Impl<Extract<Head<T, N>, unknown[]>, Extract<Head<F, N>, boolean[]>>,
+        Impl<Extract<Tail<T, N>, unknown[]>, Extract<Tail<F, N>, boolean[]>>,
+      ] extends [infer U, infer V] ?
+        [...Extract<U, unknown[]>, ...Extract<V, unknown[]>] :
+      never :
+    never;
+}
+
+export type Filter<T extends unknown[], F extends { [K in keyof T]: boolean }> = detail.filter.Impl<T, F>;
 
 // @ts-ignore
 interface _Test {
@@ -149,8 +191,12 @@ interface _Test {
   head: Assert<Eq<Head<['nade', 'mofu', 'nyan'], 1>, ['nade']>>;
   tail: Assert<Eq<Tail<['nade', 'mofu', 'nyan'], 2>, ['nyan']>>;
   slice: Assert<Eq<Slice<['nade', 'mofu', 'nyan'], 1, 2>, ['mofu']>>;
+  insert: Assert<Eq<Insert<['nade', 'mofu', 'nyan'], ['piyo', 'poyo'], 1>, ['nade', 'piyo', 'poyo', 'mofu', 'nyan']>>;
+  replace: Assert<Eq<Replace<['nade', 'mofu', 'nyan'], ['piyo', 'poyo'], 1, 2>, ['nade', 'piyo', 'poyo', 'nyan']>>;
+  erase: Assert<Eq<Erase<['nade', 'mofu', 'nyan'], 1, 2>, ['nade', 'nyan']>>;
   reverse: Assert<Eq<Reverse<['nade', 'mofu', 'nyan']>, ['nyan', 'mofu', 'nade']>>;
   flatten: Assert<Eq<Flatten<[['nade'], ['mofu', 'nyan']]>, ['nade', 'mofu', 'nyan']>>;
+  recursiveFlatten: Assert<Eq<RecursiveFlatten<['nade', ['mofu', ['nyan']]]>, ['nade', 'mofu', 'nyan']>>;
   toTuple: Assert<Eq<ToTuple<'nade mofu nyan'>, ['n', 'a', 'd', 'e', ' ', 'm', 'o', 'f', 'u', ' ', 'n', 'y', 'a', 'n']>>;
   toReverseTuple: Assert<Eq<
     ToReverseTuple<'nade mofu nyan', ToTuple<'nade mofu nyan'>[number]>,
@@ -162,4 +208,12 @@ interface _Test {
     'nyan', 'nade', 'mofu', 'nyan', 'nade', 'mofu', 'nyan', 'nade', 'mofu', 'nyan', 'nade', 'mofu', 'nyan', 'nade',
     'mofu', 'nyan', 'nade', 'mofu', 'nyan'
   ]>>;
+  zip: [
+    Assert<Eq<Zip<['nade', 'mofu', 'nyan'], ['piyo', 'poyo']>, [['nade', 'piyo'], ['mofu', 'poyo'], ['nyan', never]]>>,
+    Assert<Eq<Zip<['piyo', 'poyo'], ['nade', 'mofu', 'nyan']>, [['piyo', 'nade'], ['poyo', 'mofu'], [never, 'nyan']]>>,
+  ];
+  product: Assert<Eq<Product<['nade', 'mofu', 'nyan'], ['piyo', 'poyo']>, [
+    ['nade', 'piyo'], ['nade', 'poyo'], ['mofu', 'piyo'], ['mofu', 'poyo'], ['nyan', 'piyo'], ['nyan', 'poyo'],
+  ]>>;
+  filter: Assert<Eq<Filter<StringIndexSequence<10>, Tile<[true, false], 5>>, ['0', '2', '4', '6', '8']>>;
 }
