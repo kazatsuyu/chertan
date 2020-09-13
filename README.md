@@ -11,5 +11,5 @@ TypeScript の型レベル計算を行うライブラリです。
 
 ## 動作環境
 
-[https://github.com/microsoft/TypeScript/pull/40336](Template string types) がないと動きません。  
-現時点(2020/9/6) 、動かすには該当 PR のブランチからビルドした tsc や tsserver を利用する必要があります。
+[Template string types](https://github.com/microsoft/TypeScript/pull/40336) がないと動きません。  
+現時点(2020/9/13) 、動かすには `typescript@4.1.0-dev.20200910` 以上が必要です。
