@@ -101,7 +101,7 @@ export type Join<T extends string[], Separator extends string = ''> =
   T extends [] ? '' :
   T extends [infer U] ? U :
   Div2<`${T['length']}`> extends `${infer N}` ?
-  [Join<Extract<Head<T, N>, string[]>>, Join<Extract<Tail<T, N>, string[]>>] extends [infer U, infer V] ?
+  [Join<Extract<Head<T, N>, string[]>>, Join<Extract<Tail<T, N>, string[]>, Separator>] extends [infer U, infer V] ?
     `${Extract<U, string>}${Separator}${Extract<V, string>}` :
   never : never;
 
@@ -116,4 +116,5 @@ interface _Test {
   reverse: Assert<Eq<Reverse<['nade', 'mofu', 'nyan']>, ['nyan', 'mofu', 'nade']>>;
   flatten: Assert<Eq<Flatten<[['nade'], ['mofu', 'nyan']]>, ['nade', 'mofu', 'nyan']>>;
   toTuple: Assert<Eq<ToTuple<'nade mofu nyan'>, ['n', 'a', 'd', 'e', ' ', 'm', 'o', 'f', 'u', ' ', 'n', 'y', 'a', 'n']>>;
+  join: Assert<Eq<Join<['nade', 'mofu', 'nyan'], ','>, 'nade,mofu,nyan'>>;
 }
