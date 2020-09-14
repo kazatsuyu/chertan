@@ -1,6 +1,6 @@
 import { Digits, DigitsStr, First, RemoveFirst } from './numeric';
 import { Div2, Sub, Dec } from './numeric/integer';
-import { Assert, Eq, Every, First as First1, RemoveFirst as RemoveFirst1 } from './util';
+import { Assert, Same, Every, First as First1, RemoveFirst as RemoveFirst1 } from './util';
 
 module detail.tile {
   export type Table<T extends unknown[]> = [
@@ -185,35 +185,35 @@ export type Filter<T extends unknown[], F extends { [K in keyof T]: boolean }> =
 
 // @ts-ignore
 interface _Test {
-  makeTuple: Assert<Eq<MakeTuple<0, 13>, [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]>>;
-  indexSequence: Assert<Eq<IndexSequence<10>, [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]>>;
-  stringIndexSequence: Assert<Eq<StringIndexSequence<10>, ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9']>>;
-  head: Assert<Eq<Head<['nade', 'mofu', 'nyan'], 1>, ['nade']>>;
-  tail: Assert<Eq<Tail<['nade', 'mofu', 'nyan'], 2>, ['nyan']>>;
-  slice: Assert<Eq<Slice<['nade', 'mofu', 'nyan'], 1, 2>, ['mofu']>>;
-  insert: Assert<Eq<Insert<['nade', 'mofu', 'nyan'], ['piyo', 'poyo'], 1>, ['nade', 'piyo', 'poyo', 'mofu', 'nyan']>>;
-  replace: Assert<Eq<Replace<['nade', 'mofu', 'nyan'], ['piyo', 'poyo'], 1, 2>, ['nade', 'piyo', 'poyo', 'nyan']>>;
-  erase: Assert<Eq<Erase<['nade', 'mofu', 'nyan'], 1, 2>, ['nade', 'nyan']>>;
-  reverse: Assert<Eq<Reverse<['nade', 'mofu', 'nyan']>, ['nyan', 'mofu', 'nade']>>;
-  flatten: Assert<Eq<Flatten<[['nade'], ['mofu', 'nyan']]>, ['nade', 'mofu', 'nyan']>>;
-  recursiveFlatten: Assert<Eq<RecursiveFlatten<['nade', ['mofu', ['nyan']]]>, ['nade', 'mofu', 'nyan']>>;
-  toTuple: Assert<Eq<ToTuple<'nade mofu nyan'>, ['n', 'a', 'd', 'e', ' ', 'm', 'o', 'f', 'u', ' ', 'n', 'y', 'a', 'n']>>;
-  toReverseTuple: Assert<Eq<
+  makeTuple: Assert<Same<MakeTuple<0, 13>, [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]>>;
+  indexSequence: Assert<Same<IndexSequence<10>, [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]>>;
+  stringIndexSequence: Assert<Same<StringIndexSequence<10>, ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9']>>;
+  head: Assert<Same<Head<['nade', 'mofu', 'nyan'], 1>, ['nade']>>;
+  tail: Assert<Same<Tail<['nade', 'mofu', 'nyan'], 2>, ['nyan']>>;
+  slice: Assert<Same<Slice<['nade', 'mofu', 'nyan'], 1, 2>, ['mofu']>>;
+  insert: Assert<Same<Insert<['nade', 'mofu', 'nyan'], ['piyo', 'poyo'], 1>, ['nade', 'piyo', 'poyo', 'mofu', 'nyan']>>;
+  replace: Assert<Same<Replace<['nade', 'mofu', 'nyan'], ['piyo', 'poyo'], 1, 2>, ['nade', 'piyo', 'poyo', 'nyan']>>;
+  erase: Assert<Same<Erase<['nade', 'mofu', 'nyan'], 1, 2>, ['nade', 'nyan']>>;
+  reverse: Assert<Same<Reverse<['nade', 'mofu', 'nyan']>, ['nyan', 'mofu', 'nade']>>;
+  flatten: Assert<Same<Flatten<[['nade'], ['mofu', 'nyan']]>, ['nade', 'mofu', 'nyan']>>;
+  recursiveFlatten: Assert<Same<RecursiveFlatten<['nade', ['mofu', ['nyan']]]>, ['nade', 'mofu', 'nyan']>>;
+  toTuple: Assert<Same<ToTuple<'nade mofu nyan'>, ['n', 'a', 'd', 'e', ' ', 'm', 'o', 'f', 'u', ' ', 'n', 'y', 'a', 'n']>>;
+  toReverseTuple: Assert<Same<
     ToReverseTuple<'nade mofu nyan', ToTuple<'nade mofu nyan'>[number]>,
     ['n', 'a', 'y', 'n', ' ', 'u', 'f', 'o', 'm', ' ', 'e', 'd', 'a', 'n']
   >>;
-  join: Assert<Eq<Join<['nade', 'mofu', 'nyan'], ','>, 'nade,mofu,nyan'>>;
-  tile: Assert<Eq<Tile<['nade', 'mofu', 'nyan'], 11>, [
+  join: Assert<Same<Join<['nade', 'mofu', 'nyan'], ','>, 'nade,mofu,nyan'>>;
+  tile: Assert<Same<Tile<['nade', 'mofu', 'nyan'], 11>, [
     'nade', 'mofu', 'nyan', 'nade', 'mofu', 'nyan', 'nade', 'mofu', 'nyan', 'nade', 'mofu', 'nyan', 'nade', 'mofu',
     'nyan', 'nade', 'mofu', 'nyan', 'nade', 'mofu', 'nyan', 'nade', 'mofu', 'nyan', 'nade', 'mofu', 'nyan', 'nade',
     'mofu', 'nyan', 'nade', 'mofu', 'nyan'
   ]>>;
   zip: [
-    Assert<Eq<Zip<['nade', 'mofu', 'nyan'], ['piyo', 'poyo']>, [['nade', 'piyo'], ['mofu', 'poyo'], ['nyan', never]]>>,
-    Assert<Eq<Zip<['piyo', 'poyo'], ['nade', 'mofu', 'nyan']>, [['piyo', 'nade'], ['poyo', 'mofu'], [never, 'nyan']]>>,
+    Assert<Same<Zip<['nade', 'mofu', 'nyan'], ['piyo', 'poyo']>, [['nade', 'piyo'], ['mofu', 'poyo'], ['nyan', never]]>>,
+    Assert<Same<Zip<['piyo', 'poyo'], ['nade', 'mofu', 'nyan']>, [['piyo', 'nade'], ['poyo', 'mofu'], [never, 'nyan']]>>,
   ];
-  product: Assert<Eq<Product<['nade', 'mofu', 'nyan'], ['piyo', 'poyo']>, [
+  product: Assert<Same<Product<['nade', 'mofu', 'nyan'], ['piyo', 'poyo']>, [
     ['nade', 'piyo'], ['nade', 'poyo'], ['mofu', 'piyo'], ['mofu', 'poyo'], ['nyan', 'piyo'], ['nyan', 'poyo'],
   ]>>;
-  filter: Assert<Eq<Filter<StringIndexSequence<10>, Tile<[true, false], 5>>, ['0', '2', '4', '6', '8']>>;
+  filter: Assert<Same<Filter<StringIndexSequence<10>, Tile<[true, false], 5>>, ['0', '2', '4', '6', '8']>>;
 }

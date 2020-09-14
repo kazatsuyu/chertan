@@ -25,7 +25,7 @@ export type RemoveFirst<Str extends string, Expects extends string | Every = Eve
 export type RemoveLast<Str extends string, Expects extends string> = Str extends `${infer T}${Expects}` ? T : never;
 
 export type Extends<T, U> = (T extends U ? 1 : 0) extends 1 ? true : false;
-export type Eq<T, U> = And<[Extends<T, U>, Extends<U, T>]>;
+export type Same<T, U> = Extends<[T, U], [U, T]>;
 export type And<T extends boolean[]> = Extends<T[number], true>;
 export type Or<T extends boolean[]> = Not<Extends<T[number], false>>;
 export type Not<T extends boolean> = boolean extends T ? never : Extends<T, false>;
@@ -71,8 +71,8 @@ interface _Test {
     AssertNot<Extends<number, 0>>,
   ];
   eq: [
-    Assert<Eq<0, 0>>,
-    AssertNot<Eq<0, 1>>,
+    Assert<Same<0, 0>>,
+    AssertNot<Same<0, 1>>,
   ];
   and: [
     Assert<And<[true, true]>>,
@@ -92,14 +92,14 @@ interface _Test {
   ];
 
   first: [
-    Assert<Eq<First<_Str, _Chars>, 'a'>>,
-    Assert<Eq<First<_Str>, 'a'>>
+    Assert<Same<First<_Str, _Chars>, 'a'>>,
+    Assert<Same<First<_Str>, 'a'>>
   ];
-  last: Assert<Eq<Last<_Str, _Chars>, 'c'>>;
+  last: Assert<Same<Last<_Str, _Chars>, 'c'>>;
   removeFirst: [
-    Assert<Eq<RemoveFirst<_Str, _Chars>, 'bc'>>,
-    Assert<Eq<RemoveFirst<_Str>, 'bc'>>,
+    Assert<Same<RemoveFirst<_Str, _Chars>, 'bc'>>,
+    Assert<Same<RemoveFirst<_Str>, 'bc'>>,
   ];
-  removeLast: Assert<Eq<RemoveLast<_Str, _Chars>, 'ab'>>;
-  unexpected: Assert<Eq<First<_Str, 'b'>, never>>;
+  removeLast: Assert<Same<RemoveLast<_Str, _Chars>, 'ab'>>;
+  unexpected: Assert<Same<First<_Str, 'b'>, never>>;
 }

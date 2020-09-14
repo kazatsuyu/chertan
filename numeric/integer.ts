@@ -1,6 +1,6 @@
 import { DigitsStr, First, Last, RemoveFirst, RemoveLast } from '.';
-import { Head, MakeTuple, Slice, StringIndexSequence, Tail, Tile, ToReverseTuple, ToTuple } from '../tuple';
-import { Assert, Eq, MakeString } from '../util';
+import { Head, Join, MakeTuple, Reverse, Slice, StringIndexSequence, Tail, Tile, ToReverseTuple, ToTuple } from '../tuple';
+import { Assert, Same, MakeString } from '../util';
 
 export type Sign = '+' | '-';
 
@@ -147,41 +147,102 @@ type Mul<L extends string, R extends string> =
   R extends `-${infer R}` ? detail.mul.Impl<L, R, '-'>:
   detail.mul.Impl<L, R, ''>;
 
+module detail.compare {
+  type _0 = [...MakeTuple<'0', 9>, '', ...MakeTuple<'1', 9>];
+  type Map<T extends string[]> = {
+    [K in keyof T]: Slice<_0, Extract<T[K], string>, Add<Extract<T[K], string>, '10'>>;
+  };
+  type Table = Map<Reverse<StringIndexSequence<10>>>;
+  export type Impl<
+    L extends string[],
+    R extends string[],
+    K1 = Exclude<keyof L, keyof unknown[]>,
+    K2 = Exclude<keyof R, keyof unknown[]>,
+  > =
+    [K1] extends [K2] ?
+      [K2] extends [K1] ?
+        Join<Extract<{
+          [K in keyof L]: Table[Extract<L[K], DigitsStr>][Extract<R[Extract<K, keyof R>], DigitsStr>];
+        }, string[]>> extends `${infer T}${infer _}` ? [1, -1][Extract<T, '0' |'1'>] : 0 :
+      -1 :
+    1;
+}
+
+export type Compare<L extends string, R extends string> =
+  [L, R] extends ['0' | '-0', '0' | '-0'] | [R, L] ? 0 :
+  L extends `-${infer L}` ?
+    R extends `-${infer R}` ?
+      detail.compare.Impl<ToTuple<R>, ToTuple<L>> :
+    -1 :
+  R extends `-${infer _}` ? 1 :
+  detail.compare.Impl<ToTuple<L>, ToTuple<R>>;
+
+export type Eq<L extends string, R extends string> = {[-1]: false, 0: true, 1: false}[Compare<L, R>];
+export type Ne<L extends string, R extends string> = {[-1]: true, 0: false, 1: true}[Compare<L, R>];
+export type Gt<L extends string, R extends string> = {[-1]: false, 0: false, 1: true}[Compare<L, R>];
+export type Ge<L extends string, R extends string> = {[-1]: false, 0: true, 1: true}[Compare<L, R>];
+export type Le<L extends string, R extends string> = {[-1]: true, 0: true, 1: false}[Compare<L, R>];
+export type Lt<L extends string, R extends string> = {[-1]: true, 0: false, 1: false}[Compare<L, R>];
+
 // @ts-ignore
 interface _Test {
   inc: [
-    Assert<Eq<Inc<'9'>, '10'>>,
-    Assert<Eq<Inc<'-1'>, '0'>>,
-    Assert<Eq<Inc<'-10'>, '-9'>>,
+    Assert<Same<Inc<'9'>, '10'>>,
+    Assert<Same<Inc<'-1'>, '0'>>,
+    Assert<Same<Inc<'-10'>, '-9'>>,
   ];
   dec: [
-    Assert<Eq<Dec<'10'>, '9'>>,
-    Assert<Eq<Dec<'0'>, '-1'>>,
-    Assert<Eq<Dec<'1'>, '0'>>,
-    Assert<Eq<Dec<'-9'>, '-10'>>,
+    Assert<Same<Dec<'10'>, '9'>>,
+    Assert<Same<Dec<'0'>, '-1'>>,
+    Assert<Same<Dec<'1'>, '0'>>,
+    Assert<Same<Dec<'-9'>, '-10'>>,
   ];
   add: [
-    Assert<Eq<Add<'1', '9'>, '10'>>,
-    Assert<Eq<Add<'1', '8'>, '9'>>,
-    Assert<Eq<Add<'28554', '66181'>, '94735'>>,
-    Assert<Eq<Add<'28554', '-66181'>, '-37627'>>,
-    Assert<Eq<Add<'-28554', '66181'>, '37627'>>,
-    Assert<Eq<Add<'-28554', '-66181'>, '-94735'>>,
+    Assert<Same<Add<'1', '9'>, '10'>>,
+    Assert<Same<Add<'1', '8'>, '9'>>,
+    Assert<Same<Add<'28554', '66181'>, '94735'>>,
+    Assert<Same<Add<'28554', '-66181'>, '-37627'>>,
+    Assert<Same<Add<'-28554', '66181'>, '37627'>>,
+    Assert<Same<Add<'-28554', '-66181'>, '-94735'>>,
   ];
   sub: [
-    Assert<Eq<Sub<'10', '1'>, '9'>>,
-    Assert<Eq<Sub<'9', '1'>, '8'>>,
-    Assert<Eq<Sub<'28554', '66181'>, '-37627'>>,
-    Assert<Eq<Sub<'28554', '-66181'>, '94735'>>,
-    Assert<Eq<Sub<'-28554', '66181'>, '-94735'>>,
-    Assert<Eq<Sub<'-28554', '-66181'>, '37627'>>,
+    Assert<Same<Sub<'10', '1'>, '9'>>,
+    Assert<Same<Sub<'9', '1'>, '8'>>,
+    Assert<Same<Sub<'28554', '66181'>, '-37627'>>,
+    Assert<Same<Sub<'28554', '-66181'>, '94735'>>,
+    Assert<Same<Sub<'-28554', '66181'>, '-94735'>>,
+    Assert<Same<Sub<'-28554', '-66181'>, '37627'>>,
   ];
-  sum: Assert<Eq<Sum<StringIndexSequence<100>>, '4950'>>;
+  sum: Assert<Same<Sum<StringIndexSequence<100>>, '4950'>>;
   mul: [
-    Assert<Eq<Mul<'28554', '66181'>, '1889732274'>>,
-    Assert<Eq<Mul<'-28554', '66181'>, '-1889732274'>>,
-    Assert<Eq<Mul<'28554', '-66181'>, '-1889732274'>>,
-    Assert<Eq<Mul<'-28554', '-66181'>, '1889732274'>>,
-    Assert<Eq<Mul<'28554', '0'>, '0'>>,
+    Assert<Same<Mul<'28554', '66181'>, '1889732274'>>,
+    Assert<Same<Mul<'-28554', '66181'>, '-1889732274'>>,
+    Assert<Same<Mul<'28554', '-66181'>, '-1889732274'>>,
+    Assert<Same<Mul<'-28554', '-66181'>, '1889732274'>>,
+    Assert<Same<Mul<'28554', '0'>, '0'>>,
   ];
+  compare: [
+    Assert<Same<Compare<'28554', '66181'>, -1>>,
+    Assert<Same<Compare<'-28554', '66181'>, -1>>,
+    Assert<Same<Compare<'28554', '-66181'>, 1>>,
+    Assert<Same<Compare<'-28554', '-66181'>, 1>>,
+    Assert<Same<Compare<'66181', '28554'>, 1>>,
+    Assert<Same<Compare<'-66181', '28554'>, -1>>,
+    Assert<Same<Compare<'66181', '-28554'>, 1>>,
+    Assert<Same<Compare<'-66181', '-28554'>, -1>>,
+    Assert<Same<Compare<'28554', '28554'>, 0>>,
+    Assert<Same<Compare<'-28554', '-28554'>, 0>>,
+    Assert<Same<Compare<'0', '0'>, 0>>,
+    Assert<Same<Compare<'0', '-0'>, 0>>,
+    Assert<Same<Compare<'0', '1'>, -1>>,
+    Assert<Same<Compare<'0', '-1'>, 1>>,
+    Assert<Same<Compare<'-0', '0'>, 0>>,
+    Assert<Same<Compare<'-0', '-0'>, 0>>,
+    Assert<Same<Compare<'-0', '1'>, -1>>,
+    Assert<Same<Compare<'-0', '-1'>, 1>>,
+    Assert<Same<Compare<'1', '0'>, 1>>,
+    Assert<Same<Compare<'1', '-0'>, 1>>,
+    Assert<Same<Compare<'-1', '0'>, -1>>,
+    Assert<Same<Compare<'-1', '-0'>, -1>>,
+  ]
 }
