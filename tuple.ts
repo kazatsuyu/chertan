@@ -1,6 +1,6 @@
 import { Digits, DigitsStr, First, RemoveFirst } from './numeric';
 import { Div2, Sub, Dec } from './numeric/integer';
-import { Assert, Same, Every, First as First1, RemoveFirst as RemoveFirst1 } from './util';
+import { Assert, Same, Every, First as First1, RemoveFirst as RemoveFirst1, Before, After } from './util';
 
 module detail.tile {
   export type Table<T extends unknown[]> = [
@@ -96,7 +96,7 @@ export type RecursiveFlatten<T extends unknown[]> =
 
 module detail.toTuple {
   type _3<T extends string, Expect extends string | Every, Result extends string[], Counter extends unknown[] = []> =
-    [T, Counter] extends { 0: '' } | {1: { length: 5 }} ? [T, Result] :
+    [T, Counter] extends { 0: '' } | {1: { length: 9 }} ? [T, Result] :
     _3<RemoveFirst1<T, Expect>, Expect, [...Result, First1<T, Expect>], [...Counter, unknown]>;
   type _2<T extends string, Expect extends string | Every, Result extends string[], Counter extends unknown[] = []> =
     _3<T, Expect, Result> extends [infer T, infer R] ?
@@ -124,7 +124,7 @@ export type ToTuple<T extends string, Expect extends string | Every = Every> = d
 
 module detail.toReverseTuple {
   type _3<T extends string, Expect extends string | Every, Result extends string[], Counter extends unknown[] = []> =
-    [T, Counter] extends { 0: '' } | {1: { length: 5 }} ? [T, Result] :
+    [T, Counter] extends { 0: '' } | {1: { length: 9 }} ? [T, Result] :
     _3<RemoveFirst1<T, Expect>, Expect, [First1<T, Expect>, ...Result], [...Counter, unknown]>;
   type _2<T extends string, Expect extends string | Every, Result extends string[], Counter extends unknown[] = []> =
     _3<T, Expect, Result> extends [infer T, infer R] ?
@@ -148,7 +148,63 @@ module detail.toReverseTuple {
     never;
 }
 
-export type ToReverseTuple<T extends string, Expect extends string> = detail.toReverseTuple.Impl<T, Expect>;
+export type ToReverseTuple<T extends string, Expect extends string | Every = Every> = detail.toReverseTuple.Impl<T, Expect>;
+
+module detail.split {
+  export type _3<T extends string | null, Separator extends string, Result extends string[], Counter extends unknown[] = []> =
+    [T, Counter] extends { 0: null } | {1: { length: 9 }} ? [T, Result] :
+    _3<After<T, Separator>, Separator, [...Result, Before<T, Separator>], [...Counter, unknown]>;
+  type _2<T extends string | null, Separator extends string, Result extends string[], Counter extends unknown[] = []> =
+    _3<T, Separator, Result> extends [infer T, infer R] ?
+    [T, Counter] extends { 0: '' } | {1: { length: 4 }} ? [T, R] :
+    _2<Extract<T, string>, Separator, Extract<R, string[]>, [...Counter, unknown]> :
+    never;
+  type _1<T extends string | null, Separator extends string, Result extends string[], Counter extends unknown[] = []> =
+    _2<T, Separator, Result> extends [infer T, infer R] ?
+    [T, Counter] extends { 0: '' } | {1: { length: 4 }} ? [T, R] :
+    _1<Extract<T, string>, Separator, Extract<R, string[]>, [...Counter, unknown]> :
+    never;
+  type _0<T extends string | null, Separator extends string, Result extends string[], Counter extends unknown[] = []> =
+    _1<T, Separator, Result> extends [infer T, infer R] ?
+    [T, Counter] extends { 0: '' } | {1: { length: 4 }} ? [T, R] :
+    _0<Extract<T, string>, Separator, Extract<R, string[]>, [...Counter, unknown]> :
+    never;
+  export type Impl<T extends string | null, Separator extends string, Result extends string[] = [], Counter extends unknown[] = []> =
+    _0<T, Separator, Result> extends [infer T, infer R] ?
+      [T, Counter] extends { 0: '' } | {1: { length: 4 }} ? R :
+      Impl<Extract<T, string>, Separator, Extract<R, string[]>, [...Counter, unknown]> :
+    never;
+}
+
+export type Split<T extends string, Separator extends string> = detail.split.Impl<T, Separator>;
+
+module detail.reverseSplit {
+  export type _3<T extends string | null, Separator extends string, Result extends string[], Counter extends unknown[] = []> =
+    [T, Counter] extends { 0: null } | {1: { length: 9 }} ? [T, Result] :
+    _3<After<T, Separator>, Separator, [Before<T, Separator>, ...Result], [...Counter, unknown]>;
+  type _2<T extends string | null, Separator extends string, Result extends string[], Counter extends unknown[] = []> =
+    _3<T, Separator, Result> extends [infer T, infer R] ?
+    [T, Counter] extends { 0: '' } | {1: { length: 4 }} ? [T, R] :
+    _2<Extract<T, string>, Separator, Extract<R, string[]>, [...Counter, unknown]> :
+    never;
+  type _1<T extends string | null, Separator extends string, Result extends string[], Counter extends unknown[] = []> =
+    _2<T, Separator, Result> extends [infer T, infer R] ?
+    [T, Counter] extends { 0: '' } | {1: { length: 4 }} ? [T, R] :
+    _1<Extract<T, string>, Separator, Extract<R, string[]>, [...Counter, unknown]> :
+    never;
+  type _0<T extends string | null, Separator extends string, Result extends string[], Counter extends unknown[] = []> =
+    _1<T, Separator, Result> extends [infer T, infer R] ?
+    [T, Counter] extends { 0: '' } | {1: { length: 4 }} ? [T, R] :
+    _0<Extract<T, string>, Separator, Extract<R, string[]>, [...Counter, unknown]> :
+    never;
+  export type Impl<T extends string | null, Separator extends string, Result extends string[] = [], Counter extends unknown[] = []> =
+    _0<T, Separator, Result> extends [infer T, infer R] ?
+      [T, Counter] extends { 0: '' } | {1: { length: 4 }} ? R :
+      Impl<Extract<T, string>, Separator, Extract<R, string[]>, [...Counter, unknown]> :
+    never;
+}
+
+export type ReverseSplit<T extends string, Separator extends string> = detail.reverseSplit.Impl<T, Separator>;
 
 export type Join<T extends string[], Separator extends string = ''> =
   T extends { length: 0 | 1 } ? ['', T[0]][T['length']] :
@@ -202,6 +258,8 @@ interface _Test {
     ToReverseTuple<'nade mofu nyan', ToTuple<'nade mofu nyan'>[number]>,
     ['n', 'a', 'y', 'n', ' ', 'u', 'f', 'o', 'm', ' ', 'e', 'd', 'a', 'n']
   >>;
+  split: Assert<Same<Split<'nade,mofu,nyan', ','>, ['nade', 'mofu', 'nyan']>>;
+  reverseSplit: Assert<Same<ReverseSplit<'nade,mofu,nyan', ','>, ['nyan', 'mofu', 'nade']>>;
   join: Assert<Same<Join<['nade', 'mofu', 'nyan'], ','>, 'nade,mofu,nyan'>>;
   tile: Assert<Same<Tile<['nade', 'mofu', 'nyan'], 11>, [
     'nade', 'mofu', 'nyan', 'nade', 'mofu', 'nyan', 'nade', 'mofu', 'nyan', 'nade', 'mofu', 'nyan', 'nade', 'mofu',

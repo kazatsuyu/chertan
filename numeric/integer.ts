@@ -72,6 +72,12 @@ module detail.sub {
   type Vec3 = [[...Vec2,  Slice<Vec, 0, 10>], [Slice<Vec, 10, 20>, ...Vec2]];
   type Type<L1 extends string, R1 extends string, Carry extends 0 | 1> =
     Vec3[Carry][Extract<L1, DigitsStr>][Extract<R1, DigitsStr>];
+  type Erase0<
+    T,
+    U extends Extract<T, string> = Extract<T, string>,
+    V extends Exclude<U, '0' | '-0'> = Exclude<U, '0' | '-0'>,
+    W extends Extract<T, V | '0' | '-0'> = Extract<T, V | '0' | '-0'>,
+  > = ({ [K in V]: U } & { '0': ''} & { '-0' : '-'})[W];
   export type Impl<
     L extends string,
     R extends string,
@@ -80,7 +86,7 @@ module detail.sub {
   > = R extends '' ? [`${Sign}${L}`, dec.Impl<L, Sign>][Carry] :
       L extends '' ? never :
       Impl<RemoveLast<L>, RemoveLast<R>, Type<Last<L>, Last<R>, Carry>[1], Sign> extends infer U ?
-        `${Extract<U, string>}${Extract<Type<Last<L>, Last<R>, Carry>[0], DigitsStr>}` :
+        `${Erase0<U>}${Extract<Type<Last<L>, Last<R>, Carry>[0], DigitsStr>}` :
       never;
 }
 
@@ -131,21 +137,59 @@ module detail.mul {
   type _8 = X<_4, _4>;
   type Table = [_0, _1, _2, X<_1, _2>, _4, X<_1, _4>, X<_2, _4>, X<_1, X<_2, _4>>, _8, X<_1, _8>];
   type Tenth<T extends string, N extends string> = T extends '0' | '-0' ? '0' : `${T}${MakeString<'0', N>}`;
-  type Type<L extends string[], R extends string[], Sign extends '' | '-'> = {
+  export type Impl<L extends string[], R extends string[], Sign extends '' | '-'> = {
     [K1 in keyof L]: Sum<{
       [K2 in keyof R]: `${Sign}${Tenth<Table[Extract<L[K1], DigitsStr>][Extract<R[K2], DigitsStr>], Extract<K2, string>>}`;
     }>;
   } extends [...infer T] ? Sum<{ [K in keyof T]: Tenth<Extract<T[K], string>, Extract<K, string>> }> : never;
-  export type Impl<L extends string, R extends string, Sign extends '' | '-'> =
-    Type<ToReverseTuple<L, DigitsStr>, ToReverseTuple<R, DigitsStr>, Sign>;
 }
 
-type Mul<L extends string, R extends string> = 
+export type Mul<L extends string, R extends string> =
   L extends `-${infer L}` ?
-    R extends `-${infer R}` ? detail.mul.Impl<L, R, ''> :
-    detail.mul.Impl<L, R, '-'> :
-  R extends `-${infer R}` ? detail.mul.Impl<L, R, '-'>:
-  detail.mul.Impl<L, R, ''>;
+    R extends `-${infer R}` ? detail.mul.Impl<ToReverseTuple<L>, ToReverseTuple<R>, ''> :
+    detail.mul.Impl<ToReverseTuple<L>, ToReverseTuple<R>, '-'> :
+  R extends `-${infer R}` ? detail.mul.Impl<ToReverseTuple<L>, ToReverseTuple<R>, '-'>:
+  detail.mul.Impl<ToReverseTuple<L>, ToReverseTuple<R>, ''>;
+
+module detail.div {
+  type Padding<L extends string[], R extends string[]> = MakeString<'0', Sub<`${L['length']}`, `${R['length']}`>>;
+  type Impl2<L extends string, R extends string, Sign extends '' | '-', Pad extends string, Result extends string> =
+    Sub<L, `${R}${Pad}`> extends `-${infer _}` ?
+      Pad extends '' ? Result :
+      Impl2<L, R, Sign, RemoveFirst<Pad>, Result> :
+    Impl2<Sub<L, `${R}${Pad}`>, R, Sign, Pad, Add<Result, `${Sign}1${Pad}`>>;
+  export type Impl<L extends string, R extends string, Sign extends '' | '-'> =
+    Gt<L, R> extends true ? Impl2<L, R, Sign, Padding<ToTuple<L>, ToTuple<R>>, '0'> :
+    {'true': '1', 'false': '0'}[`${Eq<L, R>}`];
+}
+
+export type Div<L extends string, R extends string> =
+  R extends '0' | '-0' ? never :
+  L extends `-${infer L}` ?
+    R extends `-${infer R}` ? detail.div.Impl<L, R, ''> :
+    detail.div.Impl<L, R, '-'> :
+  R extends `-${infer R}` ? detail.div.Impl<L, R, '-'>:
+  detail.div.Impl<L, R, ''>;
+
+module detail.mod {
+  type Padding<L extends string[], R extends string[]> = MakeString<'0', Sub<`${L['length']}`, `${R['length']}`>>;
+  type Impl2<L extends string, R extends string, Sign extends '' | '-', Pad extends string> =
+    Sub<L, `${R}${Pad}`> extends `-${infer _}` ?
+      Pad extends '' ? `${Sign}${L}` :
+      Impl2<L, R, Sign, RemoveFirst<Pad>> :
+    Impl2<Sub<L, `${R}${Pad}`>, R, Sign, Pad>;
+  export type Impl<L extends string, R extends string, Sign extends '' | '-'> =
+    Gt<L, R> extends true ? Impl2<L, R, Sign, Padding<ToTuple<L>, ToTuple<R>>> :
+    {'true': '0', 'false': `${Sign}${L}`}[`${Eq<L, R>}`];
+}
+
+export type Mod<L extends string, R extends string> =
+  R extends '0' | '-0' ? never :
+  L extends `-${infer L}` ?
+    R extends `-${infer R}` ? detail.mod.Impl<L, R, '-'> :
+    detail.mod.Impl<L, R, '-'> :
+  R extends `-${infer R}` ? detail.mod.Impl<L, R, ''>:
+  detail.mod.Impl<L, R, ''>;
 
 module detail.compare {
   type _0 = [...MakeTuple<'0', 9>, '', ...MakeTuple<'1', 9>];
@@ -153,19 +197,16 @@ module detail.compare {
     [K in keyof T]: Slice<_0, Extract<T[K], string>, Add<Extract<T[K], string>, '10'>>;
   };
   type Table = Map<Reverse<StringIndexSequence<10>>>;
-  export type Impl<
-    L extends string[],
-    R extends string[],
-    K1 = Exclude<keyof L, keyof unknown[]>,
-    K2 = Exclude<keyof R, keyof unknown[]>,
-  > =
-    [K1] extends [K2] ?
-      [K2] extends [K1] ?
-        Join<Extract<{
-          [K in keyof L]: Table[Extract<L[K], DigitsStr>][Extract<R[Extract<K, keyof R>], DigitsStr>];
-        }, string[]>> extends `${infer T}${infer _}` ? [1, -1][Extract<T, '0' |'1'>] : 0 :
-      -1 :
-    1;
+  type Check<L extends string[], R extends string[]> = 
+    `${keyof R extends keyof L ? 'A' : ''}${keyof L extends keyof R ? 'B' : ''}`;
+  export type Impl<L extends string[], R extends string[]> = {
+    'A': 1;
+    'B': -1;
+    'AB': Join<Extract<{
+      [K in keyof L]: Table[Extract<L[K], DigitsStr>][Extract<R[Extract<K, keyof R>], DigitsStr>];
+    }, string[]>> extends `${infer T}${infer _}` ? [1, -1][Extract<T, '0' |'1'>] : 0;
+    '': never;
+  }[Check<L, R>];
 }
 
 export type Compare<L extends string, R extends string> =
@@ -207,6 +248,7 @@ interface _Test {
   ];
   sub: [
     Assert<Same<Sub<'10', '1'>, '9'>>,
+    Assert<Same<Sub<'20', '11'>, '9'>>,
     Assert<Same<Sub<'9', '1'>, '8'>>,
     Assert<Same<Sub<'28554', '66181'>, '-37627'>>,
     Assert<Same<Sub<'28554', '-66181'>, '94735'>>,
@@ -220,6 +262,26 @@ interface _Test {
     Assert<Same<Mul<'28554', '-66181'>, '-1889732274'>>,
     Assert<Same<Mul<'-28554', '-66181'>, '1889732274'>>,
     Assert<Same<Mul<'28554', '0'>, '0'>>,
+  ];
+  div: [
+    Assert<Same<Div<'28554', '66181'>, '0'>>,
+    Assert<Same<Div<'66181', '28554'>, '2'>>,
+    Assert<Same<Div<'66181', '-28554'>, '-2'>>,
+    Assert<Same<Div<'-66181', '28554'>, '-2'>>,
+    Assert<Same<Div<'-66181', '-28554'>, '2'>>,
+    Assert<Same<Div<'66181000', '28554'>, '2317'>>,
+  ];
+  mod: [
+    Assert<Same<Mod<'28554', '66181'>, '28554'>>,
+    Assert<Same<Mod<'66181', '28554'>, '9073'>>,
+    Assert<Same<Mod<'66181', '-28554'>, '9073'>>,
+    Assert<Same<Mod<'-66181', '28554'>, '-9073'>>,
+    Assert<Same<Mod<'-66181', '-28554'>, '-9073'>>,
+    Assert<Same<Div<'66181000', '28554'>, '2317'>>,
+    Assert<Same<Add<Mul<Div<'7', '3'>, '3'>, Mod<'7', '3'>>, '7'>>,
+    Assert<Same<Add<Mul<Div<'7', '-3'>, '-3'>, Mod<'7', '-3'>>, '7'>>,
+    Assert<Same<Add<Mul<Div<'-7', '3'>, '3'>, Mod<'-7', '3'>>, '-7'>>,
+    Assert<Same<Add<Mul<Div<'-7', '-3'>, '-3'>, Mod<'-7', '-3'>>, '-7'>>,
   ];
   compare: [
     Assert<Same<Compare<'28554', '66181'>, -1>>,
