@@ -1,16 +1,20 @@
-import { Digits, DigitsStr } from './numeric';
+import { DigitsStr } from './numeric';
+import { HighSurrogates } from './high-surrogates';
 
 
-module detail.every {
+namespace detail.every {
   export declare const tag: unique symbol;
 }
 export type Every = typeof detail.every.tag;
 
-module detail.first {
+namespace detail.first {
   export type Expect<Str extends string, Expects extends string> = Str extends `${infer T}${ExpectRemove<Str, Expects>}` ? T : never;
-  export type Any<Str extends string> = Str extends `${infer T}${infer _}` ? T : never;
+  export type Any<Str extends string> = Str extends `${infer T}${AnyRemove<Str>}` ? T : never;
   export type ExpectRemove<Str extends string, Expects extends string> = Str extends `${Expects}${infer T}` ? T : never;
-  export type AnyRemove<Str extends string> = Str extends `${infer _}${infer T}` ? T : never;
+  type SurrogateRemove<Str extends string> = Str extends `${HighSurrogates}${infer _}${infer T}` ? T : never ;
+  type CheckSurrogate<T extends string, U extends string> = T extends HighSurrogates ? never : U;
+  type NoSurrogateRemove<Str extends string> = Str extends `${infer T}${infer U}` ? CheckSurrogate<T, U> : never;
+  export type AnyRemove<Str extends string> = NoSurrogateRemove<Str> | SurrogateRemove<Str>;
 }
 
 export type First<Str extends string, Expects extends string | Every = Every> = {
@@ -36,10 +40,7 @@ export type Not<T extends boolean> = boolean extends T ? never : Extends<T, fals
 export type Assert<_ extends true> = never;
 export type AssertNot<_ extends false> = never;
 
-type _Str = 'abc';
-type _Chars = 'a' | 'b' | 'c';
-
-module detail.makeString {
+namespace detail.makeString {
   type Tile<T extends string> = [
       '',
       `${T}`,
@@ -64,7 +65,10 @@ module detail.makeString {
 
 export type MakeString<T extends string, N extends number | string> = detail.makeString.Impl<T, `${N}`>;
 
-//@ts-ignore
+type _Str = 'abc';
+type _Chars = 'a' | 'b' | 'c';
+
+//@ts-ignore: Test cases
 interface _Test {
   assert: Assert<true>;
   assertNot: AssertNot<false>;
@@ -96,12 +100,14 @@ interface _Test {
 
   first: [
     Assert<Same<First<_Str, _Chars>, 'a'>>,
-    Assert<Same<First<_Str>, 'a'>>
+    Assert<Same<First<_Str>, 'a'>>,
+    Assert<Same<First<'😺🐶🐧'>, '😺'>>,
   ];
   last: Assert<Same<Last<_Str, _Chars>, 'c'>>;
   removeFirst: [
     Assert<Same<RemoveFirst<_Str, _Chars>, 'bc'>>,
     Assert<Same<RemoveFirst<_Str>, 'bc'>>,
+    Assert<Same<RemoveFirst<'😺🐶🐧'>, '🐶🐧'>>,
   ];
   removeLast: Assert<Same<RemoveLast<_Str, _Chars>, 'ab'>>;
   unexpected: Assert<Same<First<_Str, 'b'>, never>>;

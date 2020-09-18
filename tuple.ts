@@ -1,8 +1,8 @@
-import { Digits, DigitsStr, First, RemoveFirst } from './numeric';
+import { DigitsStr, First, RemoveFirst } from './numeric';
 import { Div2, Sub, Dec } from './numeric/integer';
 import { Assert, Same, Every, First as First1, RemoveFirst as RemoveFirst1, Before, After } from './util';
 
-module detail.tile {
+namespace detail.tile {
   export type Table<T extends unknown[]> = [
     [],
     [...T],
@@ -31,7 +31,7 @@ export type MakeTuple<T, N extends number | string> = Tile<[T], N>;
 export type ToNumber<S extends string> = MakeTuple<unknown, S>['length'];
 
 
-module detail.indexSequence {
+namespace detail.indexSequence {
   export type Number<T extends unknown[]> = {
     [K in keyof T]: ToNumber<Extract<K, string>>;
   }
@@ -45,7 +45,7 @@ export type IndexSequence<N extends number | string> = detail.indexSequence.Numb
 
 export type StringIndexSequence<N extends number | string> = detail.indexSequence.String<MakeTuple<unknown, N>>;
 
-module detail.head {
+namespace detail.head {
   export type Impl<T extends unknown[], U extends unknown[]> = {
     [K in keyof U]: T[Extract<K, keyof T>];
   }
@@ -94,7 +94,7 @@ export type RecursiveFlatten<T extends unknown[]> =
     never :
   never;
 
-module detail.toTuple {
+namespace detail.toTuple {
   type _3<T extends string, Expect extends string | Every, Result extends string[], Counter extends unknown[] = []> =
     [T, Counter] extends { 0: '' } | {1: { length: 9 }} ? [T, Result] :
     _3<RemoveFirst1<T, Expect>, Expect, [...Result, First1<T, Expect>], [...Counter, unknown]>;
@@ -122,7 +122,7 @@ module detail.toTuple {
 
 export type ToTuple<T extends string, Expect extends string | Every = Every> = detail.toTuple.Impl<T, Expect>;
 
-module detail.toReverseTuple {
+namespace detail.toReverseTuple {
   type _3<T extends string, Expect extends string | Every, Result extends string[], Counter extends unknown[] = []> =
     [T, Counter] extends { 0: '' } | {1: { length: 9 }} ? [T, Result] :
     _3<RemoveFirst1<T, Expect>, Expect, [First1<T, Expect>, ...Result], [...Counter, unknown]>;
@@ -150,7 +150,7 @@ module detail.toReverseTuple {
 
 export type ToReverseTuple<T extends string, Expect extends string | Every = Every> = detail.toReverseTuple.Impl<T, Expect>;
 
-module detail.split {
+namespace detail.split {
   export type _3<T extends string | null, Separator extends string, Result extends string[], Counter extends unknown[] = []> =
     [T, Counter] extends { 0: null } | {1: { length: 9 }} ? [T, Result] :
     _3<After<T, Separator>, Separator, [...Result, Before<T, Separator>], [...Counter, unknown]>;
@@ -178,7 +178,7 @@ module detail.split {
 
 export type Split<T extends string, Separator extends string> = detail.split.Impl<T, Separator>;
 
-module detail.reverseSplit {
+namespace detail.reverseSplit {
   export type _3<T extends string | null, Separator extends string, Result extends string[], Counter extends unknown[] = []> =
     [T, Counter] extends { 0: null } | {1: { length: 9 }} ? [T, Result] :
     _3<After<T, Separator>, Separator, [Before<T, Separator>, ...Result], [...Counter, unknown]>;
@@ -224,7 +224,7 @@ export type Product<T extends unknown[], U extends unknown[]> = Flatten<{
   [K1 in keyof T]: { [K2 in keyof U]: [T[K1], U[K2]] };
 }>;
 
-module detail.filter {
+namespace detail.filter {
   export type Impl<T extends unknown[], F extends boolean[]> = 
     T extends { length: 0 | 1 } ? [[], F[0] extends true ? [T[0]] : []][T['length']] :
     Div2<`${T['length']}`> extends `${infer N}` ?
@@ -239,7 +239,7 @@ module detail.filter {
 
 export type Filter<T extends unknown[], F extends { [K in keyof T]: boolean }> = detail.filter.Impl<T, F>;
 
-// @ts-ignore
+// @ts-ignore: Test cases
 interface _Test {
   makeTuple: Assert<Same<MakeTuple<0, 13>, [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]>>;
   indexSequence: Assert<Same<IndexSequence<10>, [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]>>;

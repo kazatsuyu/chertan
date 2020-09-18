@@ -6,7 +6,7 @@ export type Sign = '+' | '-';
 
 export type Abs<T extends string> = T extends `${Sign}${infer U}` ? U : T;
 
-module detail.inc {
+namespace detail.inc {
   export type Impl<T extends string, Sign extends '-' | ''> = 
     T extends '' ? `${Sign}1` :
     [RemoveLast<T>, Last<T>] extends [infer U, infer V] ?
@@ -20,7 +20,7 @@ export type Inc<T extends string> =
   T extends `-${infer T}` ? detail.dec.Impl<T, '-'>:
   detail.inc.Impl<T, ''>;
 
-module detail.add {
+namespace detail.add {
   type Indices = StringIndexSequence<10>;
   type Map<T, N> = { [K in keyof T]: [T[K], N] };
   type Vec = [...Map<Indices, 0>, ...Map<Indices, 1>];
@@ -49,7 +49,7 @@ export type Add<T extends string, U extends string> =
   U extends `-${infer U}` ? detail.sub.Impl<T, U, 0, ''> | detail.sub.Impl<U, T, 0, '-'>:
   detail.add.Impl<T, U, 0, ''>;
 
-module detail.dec {
+namespace detail.dec {
   export type Impl<T extends string, Sign extends '-' | ''> = 
     T extends '' | '0' ? never :
     [RemoveLast<T>, Last<T>] extends [infer U, infer V] ?
@@ -63,7 +63,7 @@ export type Dec<T extends string> =
   T extends `-${infer T}` ? detail.inc.Impl<T, '-'> :
   detail.dec.Impl<T, ''>;
 
-module detail.sub {
+namespace detail.sub {
   type Indices = ['9', '8', '7', '6', '5', '4', '3', '2', '1', '0'];
   type Map<T, N> = { [K in keyof T]: [T[K], N] };
   type Vec = [...Map<Indices, 0>, ...Map<Indices, 1>];
@@ -97,7 +97,7 @@ export type Sub<T extends string, U extends string> =
   U extends `-${infer U}` ? detail.add.Impl<T, U, 0, ''> :
   detail.sub.Impl<T, U, 0, ''> | detail.sub.Impl<U, T, 0, '-'>;
 
-module detail.div2 {
+namespace detail.div2 {
   // Mapped type と Flatten を駆使すれば生成できるが Flatten がこれに依存しているため使えない
   type Quotient<Pad extends '' | '0'> = [
     Pad, Pad, 1, 1, 2, 2, 3, 3, 4, 4, 5, 5, 6, 6, 7, 7, 8, 8, 9, 9,
@@ -126,7 +126,7 @@ export type Sum<T extends string[]> =
     never :
   never;
 
-module detail.mul {
+namespace detail.mul {
   type X<T extends string[], U extends string[]> = {
     [K in keyof T]: add.Impl<Extract<T[K], string>, Extract<U[Extract<K, keyof U>], string>, 0, ''>;
   }
@@ -151,7 +151,7 @@ export type Mul<L extends string, R extends string> =
   R extends `-${infer R}` ? detail.mul.Impl<ToReverseTuple<L>, ToReverseTuple<R>, '-'>:
   detail.mul.Impl<ToReverseTuple<L>, ToReverseTuple<R>, ''>;
 
-module detail.div {
+namespace detail.div {
   type Padding<L extends string[], R extends string[]> = MakeString<'0', Sub<`${L['length']}`, `${R['length']}`>>;
   type Impl2<L extends string, R extends string, Sign extends '' | '-', Pad extends string, Result extends string> =
     Sub<L, `${R}${Pad}`> extends `-${infer _}` ?
@@ -171,7 +171,7 @@ export type Div<L extends string, R extends string> =
   R extends `-${infer R}` ? detail.div.Impl<L, R, '-'>:
   detail.div.Impl<L, R, ''>;
 
-module detail.mod {
+namespace detail.mod {
   type Padding<L extends string[], R extends string[]> = MakeString<'0', Sub<`${L['length']}`, `${R['length']}`>>;
   type Impl2<L extends string, R extends string, Sign extends '' | '-', Pad extends string> =
     Sub<L, `${R}${Pad}`> extends `-${infer _}` ?
@@ -191,7 +191,7 @@ export type Mod<L extends string, R extends string> =
   R extends `-${infer R}` ? detail.mod.Impl<L, R, ''>:
   detail.mod.Impl<L, R, ''>;
 
-module detail.compare {
+namespace detail.compare {
   type _0 = [...MakeTuple<'0', 9>, '', ...MakeTuple<'1', 9>];
   type Map<T extends string[]> = {
     [K in keyof T]: Slice<_0, Extract<T[K], string>, Add<Extract<T[K], string>, '10'>>;
@@ -225,7 +225,7 @@ export type Ge<L extends string, R extends string> = {[-1]: false, 0: true, 1: t
 export type Le<L extends string, R extends string> = {[-1]: true, 0: true, 1: false}[Compare<L, R>];
 export type Lt<L extends string, R extends string> = {[-1]: true, 0: false, 1: false}[Compare<L, R>];
 
-// @ts-ignore
+// @ts-ignore: Test cases
 interface _Test {
   inc: [
     Assert<Same<Inc<'9'>, '10'>>,

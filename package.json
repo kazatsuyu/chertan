@@ -6,7 +6,19 @@
   "repository": "https://github.com/kazatsuyu/chertan.git",
   "author": "Shirayama Kazatsuyu",
   "license": "MIT",
+  "scripts": {
+    "gen-high-surrogates": "ts-node tools/gen-high-surrogates.ts > high-surrogates.ts"
+  },
   "devDependencies": {
-    "typescript": "next"
+    "@types/node": "^14.11.1",
+    "@typescript-eslint/eslint-plugin": "canary",
+    "@typescript-eslint/parser": "canary",
+    "@typescript-eslint/typescript-estree": "canary",
+    "eslint": "^7.9.0",
+    "eslint-config-prettier": "^6.11.0",
+    "eslint-plugin-prettier": "^3.1.4",
+    "prettier": "^2.1.2",
+    "typescript": "next",
+    "ts-node": "^9.0.0"
   }
 }
