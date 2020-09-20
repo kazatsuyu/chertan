@@ -29,7 +29,6 @@ export type RemoveFirst<Str extends string, Expects extends string | Every = Eve
 export type RemoveLast<Str extends string, Expects extends string> = Str extends `${infer T}${Expects}` ? T : never;
 export type Before<Str extends string, Separator extends string> = Str extends `${infer T}${Separator}${infer _}` ? T : Str;
 export type After<Str extends string, Separator extends string> = Str extends `${infer _}${Separator}${infer T}` ? T : null;
-export type Separator<Str extends string, Separator extends string> = Str extends `${Before<Str, Separator>}${infer T}${After<Str, Separator>}` ? T : null;
 
 export type Extends<T, U> = (T extends U ? 1 : 0) extends 1 ? true : false;
 export type Same<T, U> = Extends<[T, U], [U, T]>;

@@ -5,6 +5,7 @@
         "jsx": "preserve",
         "sourceMap": true,
         "noEmit": true,
+        "strict": true,
     },
     "exclude": [
         "node_modules",

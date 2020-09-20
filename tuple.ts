@@ -153,7 +153,7 @@ export type ToReverseTuple<T extends string, Expect extends string | Every = Eve
 namespace detail.split {
   export type _3<T extends string | null, Separator extends string, Result extends string[], Counter extends unknown[] = []> =
     [T, Counter] extends { 0: null } | {1: { length: 9 }} ? [T, Result] :
-    _3<After<T, Separator>, Separator, [...Result, Before<T, Separator>], [...Counter, unknown]>;
+    _3<After<Exclude<T, null>, Separator>, Separator, [...Result, Before<Exclude<T, null>, Separator>], [...Counter, unknown]>;
   type _2<T extends string | null, Separator extends string, Result extends string[], Counter extends unknown[] = []> =
     _3<T, Separator, Result> extends [infer T, infer R] ?
     [T, Counter] extends { 0: '' } | {1: { length: 4 }} ? [T, R] :
@@ -181,7 +181,7 @@ export type Split<T extends string, Separator extends string> = detail.split.Imp
 namespace detail.reverseSplit {
   export type _3<T extends string | null, Separator extends string, Result extends string[], Counter extends unknown[] = []> =
     [T, Counter] extends { 0: null } | {1: { length: 9 }} ? [T, Result] :
-    _3<After<T, Separator>, Separator, [Before<T, Separator>, ...Result], [...Counter, unknown]>;
+    _3<After<Exclude<T, null>, Separator>, Separator, [Before<Exclude<T, null>, Separator>, ...Result], [...Counter, unknown]>;
   type _2<T extends string | null, Separator extends string, Result extends string[], Counter extends unknown[] = []> =
     _3<T, Separator, Result> extends [infer T, infer R] ?
     [T, Counter] extends { 0: '' } | {1: { length: 4 }} ? [T, R] :
@@ -253,12 +253,20 @@ interface _Test {
   reverse: Assert<Same<Reverse<['nade', 'mofu', 'nyan']>, ['nyan', 'mofu', 'nade']>>;
   flatten: Assert<Same<Flatten<[['nade'], ['mofu', 'nyan']]>, ['nade', 'mofu', 'nyan']>>;
   recursiveFlatten: Assert<Same<RecursiveFlatten<['nade', ['mofu', ['nyan']]]>, ['nade', 'mofu', 'nyan']>>;
-  toTuple: Assert<Same<ToTuple<'nade mofu nyan'>, ['n', 'a', 'd', 'e', ' ', 'm', 'o', 'f', 'u', ' ', 'n', 'y', 'a', 'n']>>;
+  toTuple: [
+    Assert<Same<ToTuple<'nade mofu nyan'>, ['n', 'a', 'd', 'e', ' ', 'm', 'o', 'f', 'u', ' ', 'n', 'y', 'a', 'n']>>,
+    Assert<Same<ToTuple<'nade mofu nyan', 'nade' | 'mofu' | 'nyan' | ' '>, ['nade', ' ', 'mofu', ' ', 'nyan']>>,
+    Assert<Same<ToTuple<'😺🐶🐧'>, ['😺', '🐶', '🐧']>>,
+  ];
   toReverseTuple: Assert<Same<
     ToReverseTuple<'nade mofu nyan', ToTuple<'nade mofu nyan'>[number]>,
     ['n', 'a', 'y', 'n', ' ', 'u', 'f', 'o', 'm', ' ', 'e', 'd', 'a', 'n']
   >>;
-  split: Assert<Same<Split<'nade,mofu,nyan', ','>, ['nade', 'mofu', 'nyan']>>;
+  split: [
+    Assert<Same<Split<'nade,mofu,nyan', ','>, ['nade', 'mofu', 'nyan']>>,
+    // Splitに空文字を渡した時はサロゲートペアが考慮されないことの確認
+    Assert<Same<Split<'😺🐶🐧', ''>, [ '\ud83d', '\ude3a', '\ud83d', '\udc36', '\ud83d', '\udc27' ]>>,
+  ];
   reverseSplit: Assert<Same<ReverseSplit<'nade,mofu,nyan', ','>, ['nyan', 'mofu', 'nade']>>;
   join: Assert<Same<Join<['nade', 'mofu', 'nyan'], ','>, 'nade,mofu,nyan'>>;
   tile: Assert<Same<Tile<['nade', 'mofu', 'nyan'], 11>, [
